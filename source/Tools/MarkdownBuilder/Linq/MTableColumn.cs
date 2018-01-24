@@ -4,6 +4,7 @@ using System.Diagnostics;
 
 namespace Pihrtsoft.Markdown.Linq
 {
+    //MTableHeaderCell
     [DebuggerDisplay("{Kind} {Alignment} {ToStringDebuggerDisplay(),nq}")]
     public class MTableColumn : MContainer
     {

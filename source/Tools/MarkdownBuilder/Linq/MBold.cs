@@ -36,13 +36,5 @@ namespace Pihrtsoft.Markdown.Linq
         {
             return new MBold(this);
         }
-
-        internal override void ValidateElement(MElement element)
-        {
-            if (element.Kind == MarkdownKind.Bold)
-                Error.InvalidContent(this, element);
-
-            base.ValidateElement(element);
-        }
     }
 }

@@ -36,13 +36,5 @@ namespace Pihrtsoft.Markdown.Linq
         {
             return new MStrikethrough(this);
         }
-
-        internal override void ValidateElement(MElement element)
-        {
-            if (element.Kind == MarkdownKind.Strikethrough)
-                Error.InvalidContent(this, element);
-
-            base.ValidateElement(element);
-        }
     }
 }

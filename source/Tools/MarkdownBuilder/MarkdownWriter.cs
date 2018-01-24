@@ -29,7 +29,7 @@ namespace Pihrtsoft.Markdown
 
         protected State _state;
 
-        private readonly Stack<MarkdownKind> _stack = new Stack<MarkdownKind>();
+        private readonly Stack<State> _stateStack = new Stack<State>();
 
         protected MarkdownWriter(MarkdownWriterSettings settings = null)
         {
@@ -44,7 +44,20 @@ namespace Pihrtsoft.Markdown
                 {
                     case State.Start:
                         return WriteState.Start;
-                    case State.Content:
+                    case State.SimpleElement:
+                    case State.SimpleBlock:
+                    case State.Heading:
+                    case State.Inline:
+                    case State.Table:
+                    case State.TableRow:
+                    case State.TableCell:
+                    case State.BlockQuote:
+                    case State.BulletList:
+                    case State.OrderedList:
+                    case State.TaskList:
+                    case State.BulletItem:
+                    case State.OrderedItem:
+                    case State.TaskItem:
                         return WriteState.Content;
                     case State.Closed:
                         return WriteState.Closed;
@@ -106,47 +119,36 @@ namespace Pihrtsoft.Markdown
             return new MarkdownTextWriter(new StreamWriter(stream, encoding ?? Encoding.UTF8), settings);
         }
 
-        private void Push(MarkdownKind kind)
+        private void Push(State state)
         {
-            Check(kind);
-            _stack.Push(kind);
+            if (_state == State.Closed)
+                throw new InvalidOperationException("Cannot write to a closed writer.");
+
+            if (_state == State.Error)
+                throw new InvalidOperationException("Cannot write to a writer in error state.");
+
+            State newState = _stateTable[((int)_state * 14) + (int)state - 1];
+
+            //TODO: error message
+            if (newState == State.Error)
+                throw new InvalidOperationException($"Cannot move from from state '{_state}' to state '{state}'.");
+
+            _stateStack.Push(_state);
+            _state = newState;
         }
 
-        protected void Check(MarkdownKind _)
+        private void Pop(State state)
         {
-            try
-            {
-                if (_state == State.Closed)
-                    throw new InvalidOperationException("Cannot write to a closed writer.");
+            Debug.Assert(_state == state);
 
-                if (_state == State.Error)
-                    throw new InvalidOperationException("Cannot write to a writer in error state.");
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        private void Pop(MarkdownKind kind)
-        {
-            if (_stack.Count == 0)
-            {
-                //TODO: throw
-            }
-
-            if (_stack.Pop() != kind)
-            {
-                //TODO: throw
-            }
+            _state = _stateStack.Pop();
         }
 
         public void WriteStartBold()
         {
             try
             {
-                Push(MarkdownKind.Bold);
+                Push(State.Inline);
                 WriteRaw(Format.BoldDelimiter);
             }
             catch
@@ -161,7 +163,7 @@ namespace Pihrtsoft.Markdown
             try
             {
                 WriteRaw(Format.BoldDelimiter);
-                Pop(MarkdownKind.Bold);
+                Pop( State.Inline);
             }
             catch
             {
@@ -189,7 +191,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.Italic);
+                Push(State.Inline);
                 WriteRaw(Format.ItalicDelimiter);
             }
             catch
@@ -204,7 +206,7 @@ namespace Pihrtsoft.Markdown
             try
             {
                 WriteRaw(Format.ItalicDelimiter);
-                Pop(MarkdownKind.Italic);
+                Pop(State.Inline);
             }
             catch
             {
@@ -232,7 +234,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.Strikethrough);
+                Push(State.Inline);
                 WriteRaw("~~");
             }
             catch
@@ -247,7 +249,7 @@ namespace Pihrtsoft.Markdown
             try
             {
                 WriteRaw("~~");
-                Pop(MarkdownKind.Strikethrough);
+                Pop(State.Inline);
             }
             catch
             {
@@ -275,7 +277,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.InlineCode);
+                Push(State.SimpleElement);
                 WriteRaw("`");
 
                 if (!string.IsNullOrEmpty(text))
@@ -290,6 +292,7 @@ namespace Pihrtsoft.Markdown
                 }
 
                 WriteRaw("`");
+                Pop(State.SimpleElement);
             }
             catch
             {
@@ -304,7 +307,7 @@ namespace Pihrtsoft.Markdown
             {
                 Error.ThrowOnInvalidHeadingLevel(level);
 
-                Push(MarkdownKind.Heading);
+                Push(State.Heading);
 
                 _headingLevel = level;
 
@@ -354,7 +357,7 @@ namespace Pihrtsoft.Markdown
                 }
 
                 WriteEmptyLineIf(Format.EmptyLineAfterHeading);
-                Pop(MarkdownKind.Heading);
+                Pop(State.Heading);
             }
             catch
             {
@@ -412,7 +415,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.BulletItem);
+                Push(State.BulletItem);
                 WriteLineIfNecessary();
                 WriteRaw(Format.BulletItemStart);
                 ListLevel++;
@@ -428,7 +431,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Pop(MarkdownKind.BulletItem);
+                Pop(State.BulletItem);
                 ListLevel--;
                 WriteLine();
             }
@@ -459,7 +462,7 @@ namespace Pihrtsoft.Markdown
             try
             {
                 Error.ThrowOnInvalidItemNumber(number);
-                Push(MarkdownKind.OrderedItem);
+                Push(State.OrderedItem);
                 WriteLineIfNecessary();
                 WriteValue(number);
                 WriteRaw(Format.OrderedItemStart);
@@ -476,7 +479,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Pop(MarkdownKind.OrderedItem);
+                Pop(State.OrderedItem);
                 ListLevel--;
                 WriteLineIfNecessary();
             }
@@ -507,7 +510,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.TaskItem);
+                Push(State.TaskItem);
                 WriteLineIfNecessary();
 
                 if (isCompleted)
@@ -537,7 +540,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Pop(MarkdownKind.TaskItem);
+                Pop(State.TaskItem);
                 ListLevel--;
                 WriteLineIfNecessary();
             }
@@ -587,9 +590,10 @@ namespace Pihrtsoft.Markdown
 
                 Error.ThrowOnInvalidUrl(url);
 
-                Push(MarkdownKind.Image);
+                Push(State.SimpleElement);
                 WriteRaw("!");
                 WriteLinkCore(text, url, title);
+                Pop(State.SimpleElement);
             }
             catch
             {
@@ -607,8 +611,9 @@ namespace Pihrtsoft.Markdown
 
                 Error.ThrowOnInvalidUrl(url);
 
-                Push(MarkdownKind.Link);
+                Push(State.SimpleElement);
                 WriteLinkCore(text, url, title);
+                Pop(State.SimpleElement);
             }
             catch
             {
@@ -643,8 +648,9 @@ namespace Pihrtsoft.Markdown
             try
             {
                 Error.ThrowOnInvalidUrl(url);
-                Push(MarkdownKind.Autolink);
+                Push(State.SimpleElement);
                 WriteAngleBrackets(url);
+                Pop(State.SimpleElement);
             }
             catch
             {
@@ -657,9 +663,10 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.ImageReference);
+                Push(State.SimpleElement);
                 WriteRaw("!");
                 WriteLinkReferenceCore(text, label);
+                Pop(State.SimpleElement);
             }
             catch
             {
@@ -672,8 +679,9 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.LinkReference);
+                Push(State.SimpleElement);
                 WriteLinkReferenceCore(text, label);
+                Pop(State.SimpleElement);
             }
             catch
             {
@@ -694,13 +702,14 @@ namespace Pihrtsoft.Markdown
             {
                 Error.ThrowOnInvalidUrl(url);
 
-                Push(MarkdownKind.Label);
+                Push(State.SimpleElement);
                 WriteLineIfNecessary();
                 WriteSquareBrackets(label);
                 WriteRaw(": ");
                 WriteAngleBrackets(url);
                 WriteLinkTitle(title);
                 WriteLineIfNecessary();
+                Pop(State.SimpleElement);
             }
             catch
             {
@@ -738,7 +747,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.IndentedCodeBlock);
+                Push(State.SimpleBlock);
 
                 WriteLine(Format.EmptyLineBeforeCodeBlock);
 
@@ -747,6 +756,7 @@ namespace Pihrtsoft.Markdown
                 _indentedCodeBlock = false;
                 WriteLine();
                 WriteEmptyLineIf(Format.EmptyLineAfterCodeBlock);
+                Pop(State.SimpleBlock);
             }
             catch
             {
@@ -760,7 +770,7 @@ namespace Pihrtsoft.Markdown
             try
             {
                 Error.ThrowOnInvalidFencedCodeBlockInfo(info);
-                Push(MarkdownKind.FencedCodeBlock);
+                Push(State.SimpleBlock);
 
                 WriteLine(Format.EmptyLineBeforeCodeBlock);
 
@@ -775,6 +785,7 @@ namespace Pihrtsoft.Markdown
 
                 WriteLine();
                 WriteEmptyLineIf(Format.EmptyLineAfterCodeBlock);
+                Pop(State.SimpleBlock);
             }
             catch
             {
@@ -787,7 +798,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.BlockQuote);
+                Push(State.BlockQuote);
                 WriteLineIfNecessary();
                 QuoteLevel++;
             }
@@ -804,7 +815,7 @@ namespace Pihrtsoft.Markdown
             {
                 WriteLineIfNecessary();
                 QuoteLevel--;
-                Pop(MarkdownKind.BlockQuote);
+                Pop(State.BlockQuote);
             }
             catch
             {
@@ -817,10 +828,9 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                QuoteLevel++;
+                WriteStartBlockQuote();
                 WriteString(text);
-                WriteLineIfNecessary();
-                QuoteLevel--;
+                WriteEndBlockQuote();
             }
             catch
             {
@@ -847,7 +857,7 @@ namespace Pihrtsoft.Markdown
                 Error.ThrowOnInvalidHorizontalRuleCount(count);
                 Error.ThrowOnInvalidHorizontalRuleSeparator(separator);
 
-                Push(MarkdownKind.HorizontalRule);
+                Push(State.SimpleBlock);
 
                 WriteLineIfNecessary();
 
@@ -868,6 +878,7 @@ namespace Pihrtsoft.Markdown
                 }
 
                 WriteLine();
+                Pop(State.SimpleBlock);
             }
             catch
             {
@@ -893,7 +904,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.Table);
+                Push(State.Table);
 
                 WriteLine(Format.EmptyLineBeforeTable);
 
@@ -915,7 +926,7 @@ namespace Pihrtsoft.Markdown
                 _tableColumns = null;
                 _tableColumnCount = -1;
                 WriteEmptyLineIf(Format.EmptyLineAfterTable);
-                Pop(MarkdownKind.Table);
+                Pop(State.Table);
             }
             catch
             {
@@ -968,7 +979,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.TableRow);
+                Push(State.TableRow);
                 _tableRowIndex++;
                 _tableColumnIndex = -1;
             }
@@ -992,7 +1003,7 @@ namespace Pihrtsoft.Markdown
                 WriteLine();
                 _tableColumnIndex = -1;
 
-                Pop(MarkdownKind.TableRow);
+                Pop(State.TableRow);
             }
             catch
             {
@@ -1005,9 +1016,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                //TODO: stack top is table row
-
-                Push(MarkdownKind.Inline);
+                Push(State.TableCell);
 
                 _tableColumnIndex++;
 
@@ -1089,7 +1098,7 @@ namespace Pihrtsoft.Markdown
                 }
 
                 _tableCellPos = -1;
-                Pop(MarkdownKind.Inline);
+                Pop(State.TableCell);
             }
             catch
             {
@@ -1177,7 +1186,7 @@ namespace Pihrtsoft.Markdown
             {
                 Error.ThrowOnInvalidCharEntity(value);
 
-                Push(MarkdownKind.CharEntity);
+                Push(State.SimpleElement);
                 WriteRaw("&#");
 
                 if (Format.CharEntityFormat == CharEntityFormat.Hexadecimal)
@@ -1195,6 +1204,7 @@ namespace Pihrtsoft.Markdown
                 }
 
                 WriteRaw(";");
+                Pop(State.SimpleElement);
             }
             catch
             {
@@ -1207,10 +1217,11 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                Push(MarkdownKind.EntityRef);
+                Push(State.SimpleElement);
                 WriteRaw("&");
                 WriteRaw(name);
                 WriteRaw(";");
+                Pop(State.SimpleElement);
             }
             catch
             {
@@ -1232,10 +1243,11 @@ namespace Pihrtsoft.Markdown
                         throw new ArgumentException("Last character of XML comment text cannot be '-'.");
                 }
 
-                Push(MarkdownKind.Comment);
+                Push(State.SimpleElement);
                 WriteRaw("<!-- ");
                 WriteRaw(text);
                 WriteRaw(" -->");
+                Pop(State.SimpleElement);
             }
             catch
             {
@@ -1432,10 +1444,266 @@ namespace Pihrtsoft.Markdown
 
         protected enum State
         {
-            Start = 0,
-            Content = 1,
-            Closed = 2,
-            Error = 3
+            Start,
+            SimpleElement,
+            SimpleBlock,
+            Heading,
+            Inline,
+            Table,
+            TableRow,
+            TableCell,
+            BlockQuote,
+            BulletList,
+            OrderedList,
+            TaskList,
+            BulletItem,
+            OrderedItem,
+            TaskItem,
+            Closed,
+            Error
         }
+
+        private static readonly State[] _stateTable =
+        {
+            /* State.Start */
+            /* State.SimpleElement */ State.SimpleElement,
+            /* State.SimpleBlock   */ State.SimpleBlock,
+            /* State.Heading       */ State.Heading,
+            /* State.Inline        */ State.Inline,
+            /* State.Table         */ State.Table,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.BlockQuote,
+            /* State.BulletList    */ State.BulletList,
+            /* State.OrderedList   */ State.OrderedList,
+            /* State.TaskList      */ State.TaskList,
+            /* State.BulletItem    */ State.BulletItem,
+            /* State.OrderedItem   */ State.OrderedItem,
+            /* State.TaskItem      */ State.TaskItem,
+
+            /* State.SimpleElement */
+            /* State.SimpleElement */ State.Error,
+            /* State.SimpleBlock   */ State.Error,
+            /* State.Heading       */ State.Error,
+            /* State.Inline        */ State.Error,
+            /* State.Table         */ State.Error,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.Error,
+            /* State.BulletList    */ State.Error,
+            /* State.OrderedList   */ State.Error,
+            /* State.TaskList      */ State.Error,
+            /* State.BulletItem    */ State.Error,
+            /* State.OrderedItem   */ State.Error,
+            /* State.TaskItem      */ State.Error,
+
+            /* State.SimpleBlock */
+            /* State.SimpleElement */ State.Error,
+            /* State.SimpleBlock   */ State.Error,
+            /* State.Heading       */ State.Error,
+            /* State.Inline        */ State.Error,
+            /* State.Table         */ State.Error,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.Error,
+            /* State.BulletList    */ State.Error,
+            /* State.OrderedList   */ State.Error,
+            /* State.TaskList      */ State.Error,
+            /* State.BulletItem    */ State.Error,
+            /* State.OrderedItem   */ State.Error,
+            /* State.TaskItem      */ State.Error,
+
+            /* State.Heading */
+            /* State.SimpleElement */ State.SimpleElement,
+            /* State.SimpleBlock   */ State.Error,
+            /* State.Heading       */ State.Error,
+            /* State.Inline        */ State.Inline,
+            /* State.Table         */ State.Error,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.Error,
+            /* State.BulletList    */ State.Error,
+            /* State.OrderedList   */ State.Error,
+            /* State.TaskList      */ State.Error,
+            /* State.BulletItem    */ State.Error,
+            /* State.OrderedItem   */ State.Error,
+            /* State.TaskItem      */ State.Error,
+
+            /* State.Inline */
+            /* State.SimpleElement */ State.SimpleElement,
+            /* State.SimpleBlock   */ State.Error,
+            /* State.Heading       */ State.Error,
+            /* State.Inline        */ State.Inline,
+            /* State.Table         */ State.Error,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.Error,
+            /* State.BulletList    */ State.Error,
+            /* State.OrderedList   */ State.Error,
+            /* State.TaskList      */ State.Error,
+            /* State.BulletItem    */ State.Error,
+            /* State.OrderedItem   */ State.Error,
+            /* State.TaskItem      */ State.Error,
+
+            /* State.Table */
+            /* State.SimpleElement */ State.Error,
+            /* State.SimpleBlock   */ State.Error,
+            /* State.Heading       */ State.Error,
+            /* State.Inline        */ State.Error,
+            /* State.Table         */ State.Error,
+            /* State.TableRow      */ State.TableRow,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.Error,
+            /* State.BulletList    */ State.Error,
+            /* State.OrderedList   */ State.Error,
+            /* State.TaskList      */ State.Error,
+            /* State.BulletItem    */ State.Error,
+            /* State.OrderedItem   */ State.Error,
+            /* State.TaskItem      */ State.Error,
+
+            /* State.TableRow */
+            /* State.SimpleElement */ State.Error,
+            /* State.SimpleBlock   */ State.Error,
+            /* State.Heading       */ State.Error,
+            /* State.Inline        */ State.Error,
+            /* State.Table         */ State.Error,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.TableCell,
+            /* State.BlockQuote    */ State.Error,
+            /* State.BulletList    */ State.Error,
+            /* State.OrderedList   */ State.Error,
+            /* State.TaskList      */ State.Error,
+            /* State.BulletItem    */ State.Error,
+            /* State.OrderedItem   */ State.Error,
+            /* State.TaskItem      */ State.Error,
+
+            /* State.TableCell */
+            /* State.SimpleElement */ State.SimpleElement,
+            /* State.SimpleBlock   */ State.Error,
+            /* State.Heading       */ State.Error,
+            /* State.Inline        */ State.Inline,
+            /* State.Table         */ State.Error,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.Error,
+            /* State.BulletList    */ State.Error,
+            /* State.OrderedList   */ State.Error,
+            /* State.TaskList      */ State.Error,
+            /* State.BulletItem    */ State.Error,
+            /* State.OrderedItem   */ State.Error,
+            /* State.TaskItem      */ State.Error,
+
+            /* State.BlockQuote */
+            /* State.SimpleElement */ State.SimpleElement,
+            /* State.SimpleBlock   */ State.SimpleBlock,
+            /* State.Heading       */ State.Heading,
+            /* State.Inline        */ State.Inline,
+            /* State.Table         */ State.Table,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.BlockQuote,
+            /* State.BulletList    */ State.BulletList,
+            /* State.OrderedList   */ State.OrderedList,
+            /* State.TaskList      */ State.TaskList,
+            /* State.BulletItem    */ State.BulletItem,
+            /* State.OrderedItem   */ State.OrderedItem,
+            /* State.TaskItem      */ State.TaskItem,
+
+            /* State.BulletList */
+            /* State.SimpleElement */ State.Error,
+            /* State.SimpleBlock   */ State.Error,
+            /* State.Heading       */ State.Error,
+            /* State.Inline        */ State.Error,
+            /* State.Table         */ State.Error,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.Error,
+            /* State.BulletList    */ State.Error,
+            /* State.OrderedList   */ State.Error,
+            /* State.TaskList      */ State.Error,
+            /* State.BulletItem    */ State.BulletItem,
+            /* State.OrderedItem   */ State.Error,
+            /* State.TaskItem      */ State.Error,
+
+            /* State.OrderedList */
+            /* State.SimpleElement */ State.Error,
+            /* State.SimpleBlock   */ State.Error,
+            /* State.Heading       */ State.Error,
+            /* State.Inline        */ State.Error,
+            /* State.Table         */ State.Error,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.Error,
+            /* State.BulletList    */ State.Error,
+            /* State.OrderedList   */ State.Error,
+            /* State.TaskList      */ State.Error,
+            /* State.BulletItem    */ State.Error,
+            /* State.OrderedItem   */ State.OrderedItem,
+            /* State.TaskItem      */ State.Error,
+
+            /* State.TaskList */
+            /* State.SimpleElement */ State.Error,
+            /* State.SimpleBlock   */ State.Error,
+            /* State.Heading       */ State.Error,
+            /* State.Inline        */ State.Error,
+            /* State.Table         */ State.Error,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.Error,
+            /* State.BulletList    */ State.Error,
+            /* State.OrderedList   */ State.Error,
+            /* State.TaskList      */ State.Error,
+            /* State.BulletItem    */ State.Error,
+            /* State.OrderedItem   */ State.Error,
+            /* State.TaskItem      */ State.TaskItem,
+
+            /* State.BulletItem */
+            /* State.SimpleElement */ State.SimpleElement,
+            /* State.SimpleBlock   */ State.SimpleBlock,
+            /* State.Heading       */ State.Heading,
+            /* State.Inline        */ State.Inline,
+            /* State.Table         */ State.Table,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.BlockQuote,
+            /* State.BulletList    */ State.BulletList,
+            /* State.OrderedList   */ State.OrderedList,
+            /* State.TaskList      */ State.TaskList,
+            /* State.BulletItem    */ State.BulletItem,
+            /* State.OrderedItem   */ State.OrderedItem,
+            /* State.TaskItem      */ State.TaskItem,
+
+            /* State.OrderedItem */
+            /* State.SimpleElement */ State.SimpleElement,
+            /* State.SimpleBlock   */ State.SimpleBlock,
+            /* State.Heading       */ State.Heading,
+            /* State.Inline        */ State.Inline,
+            /* State.Table         */ State.Table,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.BlockQuote,
+            /* State.BulletList    */ State.BulletList,
+            /* State.OrderedList   */ State.OrderedList,
+            /* State.TaskList      */ State.TaskList,
+            /* State.BulletItem    */ State.BulletItem,
+            /* State.OrderedItem   */ State.OrderedItem,
+            /* State.TaskItem      */ State.TaskItem,
+
+            /* State.TaskItem */
+            /* State.SimpleElement */ State.SimpleElement,
+            /* State.SimpleBlock   */ State.SimpleBlock,
+            /* State.Heading       */ State.Heading,
+            /* State.Inline        */ State.Inline,
+            /* State.Table         */ State.Table,
+            /* State.TableRow      */ State.Error,
+            /* State.TableCell     */ State.Error,
+            /* State.BlockQuote    */ State.BlockQuote,
+            /* State.BulletList    */ State.BulletList,
+            /* State.OrderedList   */ State.OrderedList,
+            /* State.TaskList      */ State.TaskList,
+            /* State.BulletItem    */ State.BulletItem,
+            /* State.OrderedItem   */ State.OrderedItem,
+            /* State.TaskItem      */ State.TaskItem
+        };
     }
 }

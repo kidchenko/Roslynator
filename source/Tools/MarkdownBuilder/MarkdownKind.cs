@@ -6,41 +6,49 @@ namespace Pihrtsoft.Markdown
     {
         None = 0,
 
+        //SimpleElement
         Text = 1,
         Raw = 2,
         Link = 3,
         LinkReference = 4,
         Image = 5,
         ImageReference = 6,
-        Autolink = 7,
-        InlineCode = 8,
-        CharEntity = 9,
-        EntityRef = 10,
-        Comment = 11,
+        Label = 7,
+        Autolink = 8,
+        InlineCode = 9,
+        CharEntity = 10,
+        EntityRef = 11,
+        Comment = 12,
 
-        FencedCodeBlock = 12,
-        IndentedCodeBlock = 13,
-        HorizontalRule = 14,
-        Label = 15,
+        //SimpleBlock
+        FencedCodeBlock = 13,
+        IndentedCodeBlock = 14,
+        HorizontalRule = 15,
 
-        Inline = 16,
-        Bold = 17,
-        Italic = 18,
-        Strikethrough = 19,
+        Heading = 16,
 
-        Heading = 20,
+        //Inline
+        Inline = 17,
+        Bold = 18,
+        Italic = 19,
+        Strikethrough = 20,
 
         Table = 21,
         TableRow = 22,
         TableColumn = 23,
 
-        Document = 24,
-        BlockQuote = 25,
-        BulletList = 26,
+        //List
+        BulletList = 24,
+        OrderedList = 25,
+        TaskList = 26,
+
+        //ListItem
         BulletItem = 27,
-        OrderedList = 28,
-        OrderedItem = 29,
-        TaskList = 30,
-        TaskItem = 31,
+        OrderedItem = 28,
+        TaskItem = 29,
+
+        BlockQuote = 30,
+
+        Document = 31,
     }
 }

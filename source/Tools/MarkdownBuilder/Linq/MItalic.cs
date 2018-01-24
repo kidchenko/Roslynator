@@ -36,13 +36,5 @@ namespace Pihrtsoft.Markdown.Linq
         {
             return new MItalic(this);
         }
-
-        internal override void ValidateElement(MElement element)
-        {
-            if (element.Kind == MarkdownKind.Italic)
-                Error.InvalidContent(this, element);
-
-            base.ValidateElement(element);
-        }
     }
 }
