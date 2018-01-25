@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Pihrtsoft.Markdown.Linq;
 
@@ -31,24 +32,26 @@ namespace Pihrtsoft.Markdown
 
         public override void WriteString(string text)
         {
-            if (string.IsNullOrEmpty(text))
-                return;
-
             try
             {
-                //TODO: check
+                if (string.IsNullOrEmpty(text))
+                    return;
 
+                Push(State.Text);
                 WriteStringUnsafe(text);
+                Pop(State.Text);
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
 
         private unsafe void WriteStringUnsafe(string value)
         {
+            Debug.Assert(value != null);
+
             fixed (char* pSrcStart = value)
             {
                 WriteStringUnsafe(pSrcStart, pSrcStart + value.Length);
@@ -188,13 +191,11 @@ namespace Pihrtsoft.Markdown
 
             try
             {
-                //TODO: check
-
                 WriteRawUnsafe(data);
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -255,7 +256,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }

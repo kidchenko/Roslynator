@@ -57,12 +57,12 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                //TODO: check
-
                 ThrowIfClosed();
 
                 if (string.IsNullOrEmpty(text))
                     return;
+
+                Push(State.Text);
 
                 int length = text.Length;
 
@@ -136,10 +136,11 @@ namespace Pihrtsoft.Markdown
                 }
 
                 WriteRaw(text, prev, text.Length - prev);
+                Pop(State.Text);
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
 
@@ -166,14 +167,12 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                //TODO: check
-
                 ThrowIfClosed();
                 _sb.Append(data);
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -189,7 +188,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }

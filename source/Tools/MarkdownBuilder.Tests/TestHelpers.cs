@@ -184,9 +184,9 @@ namespace Pihrtsoft.Markdown.Tests
             return StringValue();
         }
 
-        public static Alignment TableColumnAlignment()
+        public static ColumnAlignment TableColumnAlignment()
         {
-            return (Alignment)IntValue(0, 2);
+            return (ColumnAlignment)IntValue(0, 2);
         }
 
         public static MTaskItem CreateTaskListItem()

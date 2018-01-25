@@ -27,7 +27,7 @@ namespace Pihrtsoft.Markdown
         private int _tableColumnIndex = -1;
         private int _tableCellPos = -1;
 
-        protected State _state;
+        protected State _currentState;
 
         private readonly Stack<State> _stateStack = new Stack<State>();
 
@@ -40,7 +40,7 @@ namespace Pihrtsoft.Markdown
         {
             get
             {
-                switch (_state)
+                switch (_currentState)
                 {
                     case State.Start:
                         return WriteState.Start;
@@ -64,7 +64,7 @@ namespace Pihrtsoft.Markdown
                     case State.Error:
                         return WriteState.Error;
                     default:
-                        throw new InvalidOperationException(ErrorMessages.UnknownEnumValue(_state));
+                        throw new InvalidOperationException(ErrorMessages.UnknownEnumValue(_currentState));
                 }
             }
         }
@@ -119,29 +119,28 @@ namespace Pihrtsoft.Markdown
             return new MarkdownTextWriter(new StreamWriter(stream, encoding ?? Encoding.UTF8), settings);
         }
 
-        private void Push(State state)
+        protected void Push(State state)
         {
-            if (_state == State.Closed)
+            if (_currentState == State.Closed)
                 throw new InvalidOperationException("Cannot write to a closed writer.");
 
-            if (_state == State.Error)
+            if (_currentState == State.Error)
                 throw new InvalidOperationException("Cannot write to a writer in error state.");
 
-            State newState = _stateTable[((int)_state * 14) + (int)state - 1];
+            State newState = _stateTable[((int)_currentState * 15) + (int)state - 1];
 
-            //TODO: error message
             if (newState == State.Error)
-                throw new InvalidOperationException($"Cannot move from from state '{_state}' to state '{state}'.");
+                throw new InvalidOperationException($"Cannot move from from state '{_currentState}' to state '{state}'.");
 
-            _stateStack.Push(_state);
-            _state = newState;
+            _stateStack.Push(_currentState);
+            _currentState = newState;
         }
 
-        private void Pop(State state)
+        protected void Pop(State state)
         {
-            Debug.Assert(_state == state);
+            Debug.Assert(_currentState == state);
 
-            _state = _stateStack.Pop();
+            _currentState = _stateStack.Pop();
         }
 
         public void WriteStartBold()
@@ -153,7 +152,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -167,7 +166,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -182,7 +181,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -196,7 +195,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -210,7 +209,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -225,7 +224,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -239,7 +238,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -253,7 +252,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -268,7 +267,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -296,7 +295,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -324,7 +323,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -361,7 +360,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -406,7 +405,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -422,7 +421,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -437,7 +436,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -452,7 +451,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -470,7 +469,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -485,7 +484,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -501,7 +500,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -526,7 +525,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -546,7 +545,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -561,7 +560,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -576,7 +575,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -597,7 +596,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -617,7 +616,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -654,7 +653,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -670,7 +669,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -685,7 +684,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -713,7 +712,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -760,7 +759,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -789,7 +788,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -804,7 +803,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -819,7 +818,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -834,7 +833,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -882,7 +881,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -913,7 +912,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -930,7 +929,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -955,7 +954,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
 
@@ -969,7 +968,7 @@ namespace Pihrtsoft.Markdown
                 }
                 catch
                 {
-                    _state = State.Error;
+                    _currentState = State.Error;
                     throw;
                 }
             }
@@ -985,7 +984,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -1007,7 +1006,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -1041,7 +1040,7 @@ namespace Pihrtsoft.Markdown
                         WriteRaw(" ");
                     }
                     else if (Format.FormatTableHeader
-                         && CurrentColumn.Alignment == Alignment.Center)
+                         && CurrentColumn.Alignment == ColumnAlignment.Center)
                     {
                         WriteRaw(" ");
                     }
@@ -1055,7 +1054,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -1086,7 +1085,7 @@ namespace Pihrtsoft.Markdown
                             WriteRaw(" ");
                     }
                     else if (Format.FormatTableHeader
-                         && CurrentColumn.Alignment != Alignment.Left)
+                         && CurrentColumn.Alignment != ColumnAlignment.Left)
                     {
                         WriteRaw(" ");
                     }
@@ -1102,7 +1101,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -1135,7 +1134,7 @@ namespace Pihrtsoft.Markdown
                         WriteTableColumnSeparator();
                     }
 
-                    if (CurrentColumn.Alignment == Alignment.Center)
+                    if (CurrentColumn.Alignment == ColumnAlignment.Center)
                     {
                         WriteRaw(":");
                     }
@@ -1149,7 +1148,7 @@ namespace Pihrtsoft.Markdown
                     if (Format.FormatTableHeader)
                         WritePadRight(3, "-");
 
-                    if (CurrentColumn.Alignment != Alignment.Left)
+                    if (CurrentColumn.Alignment != ColumnAlignment.Left)
                     {
                         WriteRaw(":");
                     }
@@ -1163,7 +1162,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -1208,7 +1207,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -1225,7 +1224,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -1251,7 +1250,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -1298,11 +1297,17 @@ namespace Pihrtsoft.Markdown
 
         private void WriteString(string text, Func<char, bool> shouldBeEscaped, char escapingChar = '\\')
         {
-            ShouldBeEscaped = shouldBeEscaped;
-            EscapingChar = escapingChar;
-            WriteString(text);
-            EscapingChar = '\\';
-            ShouldBeEscaped = MarkdownEscaper.ShouldBeEscaped;
+            try
+            {
+                ShouldBeEscaped = shouldBeEscaped;
+                EscapingChar = escapingChar;
+                WriteString(text);
+            }
+            finally
+            {
+                EscapingChar = '\\';
+                ShouldBeEscaped = MarkdownEscaper.ShouldBeEscaped;
+            }
         }
 
         public abstract void WriteRaw(string data);
@@ -1317,12 +1322,13 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
+                OnBeforeWriteLine();
                 WriteRaw(NewLineChars);
                 OnAfterWriteLine();
             }
             catch
             {
-                _state = State.Error;
+                _currentState = State.Error;
                 throw;
             }
         }
@@ -1371,6 +1377,8 @@ namespace Pihrtsoft.Markdown
 
         protected void OnBeforeWriteLine()
         {
+            //TODO: check
+
             if (_lineStartPos == Length)
             {
                 _emptyLineStartPos = _lineStartPos;
@@ -1459,6 +1467,7 @@ namespace Pihrtsoft.Markdown
             BulletItem,
             OrderedItem,
             TaskItem,
+            Text,
             Closed,
             Error
         }
@@ -1480,6 +1489,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.BulletItem,
             /* State.OrderedItem   */ State.OrderedItem,
             /* State.TaskItem      */ State.TaskItem,
+            /* State.Text          */ State.Text,
 
             /* State.SimpleElement */
             /* State.SimpleElement */ State.Error,
@@ -1496,6 +1506,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.Error,
             /* State.OrderedItem   */ State.Error,
             /* State.TaskItem      */ State.Error,
+            /* State.Text          */ State.Text,
 
             /* State.SimpleBlock */
             /* State.SimpleElement */ State.Error,
@@ -1512,6 +1523,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.Error,
             /* State.OrderedItem   */ State.Error,
             /* State.TaskItem      */ State.Error,
+            /* State.Text          */ State.Text,
 
             /* State.Heading */
             /* State.SimpleElement */ State.SimpleElement,
@@ -1528,6 +1540,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.Error,
             /* State.OrderedItem   */ State.Error,
             /* State.TaskItem      */ State.Error,
+            /* State.Text          */ State.Text,
 
             /* State.Inline */
             /* State.SimpleElement */ State.SimpleElement,
@@ -1544,6 +1557,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.Error,
             /* State.OrderedItem   */ State.Error,
             /* State.TaskItem      */ State.Error,
+            /* State.Text          */ State.Text,
 
             /* State.Table */
             /* State.SimpleElement */ State.Error,
@@ -1560,6 +1574,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.Error,
             /* State.OrderedItem   */ State.Error,
             /* State.TaskItem      */ State.Error,
+            /* State.Text          */ State.Error,
 
             /* State.TableRow */
             /* State.SimpleElement */ State.Error,
@@ -1576,6 +1591,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.Error,
             /* State.OrderedItem   */ State.Error,
             /* State.TaskItem      */ State.Error,
+            /* State.Text          */ State.Error,
 
             /* State.TableCell */
             /* State.SimpleElement */ State.SimpleElement,
@@ -1592,6 +1608,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.Error,
             /* State.OrderedItem   */ State.Error,
             /* State.TaskItem      */ State.Error,
+            /* State.Text          */ State.Text,
 
             /* State.BlockQuote */
             /* State.SimpleElement */ State.SimpleElement,
@@ -1608,6 +1625,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.BulletItem,
             /* State.OrderedItem   */ State.OrderedItem,
             /* State.TaskItem      */ State.TaskItem,
+            /* State.Text          */ State.Text,
 
             /* State.BulletList */
             /* State.SimpleElement */ State.Error,
@@ -1624,6 +1642,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.BulletItem,
             /* State.OrderedItem   */ State.Error,
             /* State.TaskItem      */ State.Error,
+            /* State.Text          */ State.Error,
 
             /* State.OrderedList */
             /* State.SimpleElement */ State.Error,
@@ -1640,6 +1659,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.Error,
             /* State.OrderedItem   */ State.OrderedItem,
             /* State.TaskItem      */ State.Error,
+            /* State.Text          */ State.Error,
 
             /* State.TaskList */
             /* State.SimpleElement */ State.Error,
@@ -1656,6 +1676,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.Error,
             /* State.OrderedItem   */ State.Error,
             /* State.TaskItem      */ State.TaskItem,
+            /* State.Text          */ State.Error,
 
             /* State.BulletItem */
             /* State.SimpleElement */ State.SimpleElement,
@@ -1672,6 +1693,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.BulletItem,
             /* State.OrderedItem   */ State.OrderedItem,
             /* State.TaskItem      */ State.TaskItem,
+            /* State.Text          */ State.Text,
 
             /* State.OrderedItem */
             /* State.SimpleElement */ State.SimpleElement,
@@ -1688,6 +1710,7 @@ namespace Pihrtsoft.Markdown
             /* State.BulletItem    */ State.BulletItem,
             /* State.OrderedItem   */ State.OrderedItem,
             /* State.TaskItem      */ State.TaskItem,
+            /* State.Text          */ State.Text,
 
             /* State.TaskItem */
             /* State.SimpleElement */ State.SimpleElement,
@@ -1703,7 +1726,8 @@ namespace Pihrtsoft.Markdown
             /* State.TaskList      */ State.TaskList,
             /* State.BulletItem    */ State.BulletItem,
             /* State.OrderedItem   */ State.OrderedItem,
-            /* State.TaskItem      */ State.TaskItem
+            /* State.TaskItem      */ State.TaskItem,
+            /* State.Text          */ State.Text
         };
     }
 }

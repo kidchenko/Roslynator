@@ -214,16 +214,16 @@ namespace Pihrtsoft.Markdown.Tests
             }
         }
 
-        public static Alignment Modify(this Alignment alignment)
+        public static ColumnAlignment Modify(this ColumnAlignment alignment)
         {
             switch (alignment)
             {
-                case Alignment.Left:
-                    return Alignment.Center;
-                case Alignment.Center:
-                    return Alignment.Right;
-                case Alignment.Right:
-                    return Alignment.Left;
+                case ColumnAlignment.Left:
+                    return ColumnAlignment.Center;
+                case ColumnAlignment.Center:
+                    return ColumnAlignment.Right;
+                case ColumnAlignment.Right:
+                    return ColumnAlignment.Left;
                 default:
                     throw new ArgumentException(alignment.ToString(), nameof(alignment));
             }

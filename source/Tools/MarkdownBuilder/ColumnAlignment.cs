@@ -2,8 +2,7 @@
 
 namespace Pihrtsoft.Markdown
 {
-    //TODO: ColumnAlignment, ContentAlignment
-    public enum Alignment
+    public enum ColumnAlignment
     {
         Left = 0,
         Center = 1,
