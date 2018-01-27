@@ -8,18 +8,18 @@ namespace Pihrtsoft.Markdown.Linq
     [DebuggerDisplay("{Kind} {Alignment} {ToStringDebuggerDisplay(),nq}")]
     public class MTableColumn : MContainer
     {
-        public MTableColumn(ColumnAlignment alignment)
+        public MTableColumn(HorizontalAlignment alignment)
         {
             Alignment = alignment;
         }
 
-        public MTableColumn(ColumnAlignment alignment, object content)
+        public MTableColumn(HorizontalAlignment alignment, object content)
             : base(content)
         {
             Alignment = alignment;
         }
 
-        public MTableColumn(ColumnAlignment alignment, params object[] content)
+        public MTableColumn(HorizontalAlignment alignment, params object[] content)
             : base(content)
         {
             Alignment = alignment;
@@ -31,7 +31,7 @@ namespace Pihrtsoft.Markdown.Linq
             Alignment = other.Alignment;
         }
 
-        public ColumnAlignment Alignment { get; set; }
+        public HorizontalAlignment Alignment { get; set; }
 
         public override MarkdownKind Kind => MarkdownKind.TableColumn;
 

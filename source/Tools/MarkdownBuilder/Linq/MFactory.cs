@@ -505,17 +505,17 @@ namespace Pihrtsoft.Markdown.Linq
             return new MTable(other);
         }
 
-        public static MTableColumn TableColumn(ColumnAlignment alignment)
+        public static MTableColumn TableColumn(HorizontalAlignment alignment)
         {
             return new MTableColumn(alignment);
         }
 
-        public static MTableColumn TableColumn(ColumnAlignment alignment, object content)
+        public static MTableColumn TableColumn(HorizontalAlignment alignment, object content)
         {
             return new MTableColumn(alignment, content);
         }
 
-        public static MTableColumn TableColumn(ColumnAlignment alignment, params object[] content)
+        public static MTableColumn TableColumn(HorizontalAlignment alignment, params object[] content)
         {
             return new MTableColumn(alignment, content);
         }

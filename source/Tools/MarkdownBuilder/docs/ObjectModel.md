@@ -1,6 +1,5 @@
 ﻿* Object
   * Element 
-
     * Text
     * Raw
     * Link
@@ -13,22 +12,18 @@
     * EntityRef
     * Comment
     * Label
-
     * FencedCodeBlock
     * IndentedCodeBlock
     * HorizontalRule
-
     * Container
       * Inline
         * Bold
         * Italic
         * Strikethrough
-
       * Heading
-
       * Table
-      * TableColumn
       * TableRow
+      * TableCell
       * BlockContainer
         * Document
         * BlockQuote

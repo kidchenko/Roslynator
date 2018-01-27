@@ -2,6 +2,7 @@
 
 namespace Pihrtsoft.Markdown
 {
+    //TODO: HeadingFormat
     public enum HeadingStyle
     {
         NumberSign = 0

@@ -140,17 +140,16 @@ namespace Pihrtsoft.Markdown
             if (_stack.Count == 0)
                 throw new InvalidOperationException($"Cannot move from from state '{_state}' to state '{state}'.");
 
-            //TODO: message
             if (_state != state)
                 throw new InvalidOperationException($"Cannot move from from state '{_state}' to state '{state}'.");
 
             _state = _stack.Pop();
         }
 
-        private void ThrowIfNotState(State state)
+        private void ThrowIfCannotWriteEnd(State state)
         {
             if (state != _state)
-                throw new InvalidOperationException($"Cannot move from from state '{_state}' to state '{state}'.");
+                throw new InvalidOperationException($"Cannot close '{state}' when state is '{_state}'.");
         }
 
         public void WriteStartBold()
@@ -171,7 +170,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                ThrowIfNotState(State.Bold);
+                ThrowIfCannotWriteEnd(State.Bold);
                 WriteRaw(Format.BoldDelimiter);
                 Pop(State.Bold);
             }
@@ -215,7 +214,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                ThrowIfNotState(State.Italic);
+                ThrowIfCannotWriteEnd(State.Italic);
                 WriteRaw(Format.ItalicDelimiter);
                 Pop(State.Italic);
             }
@@ -259,7 +258,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                ThrowIfNotState(State.Strikethrough);
+                ThrowIfCannotWriteEnd(State.Strikethrough);
                 WriteRaw("~~");
                 Pop(State.Strikethrough);
             }
@@ -345,7 +344,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                ThrowIfNotState(State.Heading);
+                ThrowIfCannotWriteEnd(State.Heading);
 
                 int level = _headingLevel;
                 _headingLevel = -1;
@@ -827,7 +826,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                ThrowIfNotState(State.BlockQuote);
+                ThrowIfCannotWriteEnd(State.BlockQuote);
                 QuoteLevel--;
                 WriteLineIfNecessary();
                 Pop(State.BlockQuote);
@@ -937,7 +936,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                ThrowIfNotState(State.Table);
+                ThrowIfCannotWriteEnd(State.Table);
                 _tableRowIndex = -1;
                 _tableColumns = null;
                 _tableColumnCount = -1;
@@ -1010,7 +1009,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                ThrowIfNotState(State.TableRow);
+                ThrowIfCannotWriteEnd(State.TableRow);
 
                 if (Format.TableOuterDelimiter
                     || (_tableRowIndex == 0 && CurrentColumn.IsWhiteSpace))
@@ -1059,7 +1058,7 @@ namespace Pihrtsoft.Markdown
                         WriteRaw(" ");
                     }
                     else if (Format.FormatTableHeader
-                         && CurrentColumn.Alignment == ColumnAlignment.Center)
+                         && CurrentColumn.Alignment == HorizontalAlignment.Center)
                     {
                         WriteRaw(" ");
                     }
@@ -1082,7 +1081,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                ThrowIfNotState(State.TableCell);
+                ThrowIfCannotWriteEnd(State.TableCell);
 
                 if (Format.TableOuterDelimiter
                     || !IsLastColumn)
@@ -1106,7 +1105,7 @@ namespace Pihrtsoft.Markdown
                             WriteRaw(" ");
                     }
                     else if (Format.FormatTableHeader
-                         && CurrentColumn.Alignment != ColumnAlignment.Left)
+                         && CurrentColumn.Alignment != HorizontalAlignment.Left)
                     {
                         WriteRaw(" ");
                     }
@@ -1155,7 +1154,7 @@ namespace Pihrtsoft.Markdown
                         WriteTableColumnSeparator();
                     }
 
-                    if (CurrentColumn.Alignment == ColumnAlignment.Center)
+                    if (CurrentColumn.Alignment == HorizontalAlignment.Center)
                     {
                         WriteRaw(":");
                     }
@@ -1169,7 +1168,7 @@ namespace Pihrtsoft.Markdown
                     if (Format.FormatTableHeader)
                         WritePadRight(3, "-");
 
-                    if (CurrentColumn.Alignment != ColumnAlignment.Left)
+                    if (CurrentColumn.Alignment != HorizontalAlignment.Left)
                     {
                         WriteRaw(":");
                     }

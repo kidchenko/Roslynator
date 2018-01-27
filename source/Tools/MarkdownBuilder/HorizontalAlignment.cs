@@ -2,7 +2,7 @@
 
 namespace Pihrtsoft.Markdown
 {
-    public enum ColumnAlignment
+    public enum HorizontalAlignment
     {
         Left = 0,
         Center = 1,

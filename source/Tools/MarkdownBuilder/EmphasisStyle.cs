@@ -2,6 +2,7 @@
 
 namespace Pihrtsoft.Markdown
 {
+    //TODO: EmphasisFormat
     public enum EmphasisStyle
     {
         Asterisk = 0,
