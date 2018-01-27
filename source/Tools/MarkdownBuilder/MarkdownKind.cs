@@ -6,7 +6,6 @@ namespace Pihrtsoft.Markdown
     {
         None = 0,
 
-        //SimpleElement
         Text = 1,
         Raw = 2,
         Link = 3,
@@ -20,14 +19,12 @@ namespace Pihrtsoft.Markdown
         EntityRef = 11,
         Comment = 12,
 
-        //SimpleBlock
         FencedCodeBlock = 13,
         IndentedCodeBlock = 14,
         HorizontalRule = 15,
 
         Heading = 16,
 
-        //Inline
         Inline = 17,
         Bold = 18,
         Italic = 19,
@@ -37,12 +34,10 @@ namespace Pihrtsoft.Markdown
         TableRow = 22,
         TableColumn = 23,
 
-        //List
         BulletList = 24,
         OrderedList = 25,
         TaskList = 26,
 
-        //ListItem
         BulletItem = 27,
         OrderedItem = 28,
         TaskItem = 29,

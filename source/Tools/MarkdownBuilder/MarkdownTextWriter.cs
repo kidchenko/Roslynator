@@ -34,16 +34,16 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
+                base.WriteString(text);
+
                 if (string.IsNullOrEmpty(text))
                     return;
 
-                Push(State.Text);
                 WriteStringUnsafe(text);
-                Pop(State.Text);
             }
             catch
             {
-                _currentState = State.Error;
+                _state = State.Error;
                 throw;
             }
         }
@@ -186,6 +186,8 @@ namespace Pihrtsoft.Markdown
 
         public override void WriteRaw(string data)
         {
+            base.WriteRaw(data);
+
             if (string.IsNullOrEmpty(data))
                 return;
 
@@ -195,7 +197,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _currentState = State.Error;
+                _state = State.Error;
                 throw;
             }
         }
@@ -256,7 +258,7 @@ namespace Pihrtsoft.Markdown
             }
             catch
             {
-                _currentState = State.Error;
+                _state = State.Error;
                 throw;
             }
         }
