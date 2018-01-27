@@ -2,7 +2,6 @@
 
 namespace Pihrtsoft.Markdown
 {
-    //TODO: BulletListFormat
     public enum BulletListStyle
     {
         Asterisk = 0,

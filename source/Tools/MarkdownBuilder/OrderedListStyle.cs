@@ -2,7 +2,6 @@
 
 namespace Pihrtsoft.Markdown
 {
-    //TODO: OrderedListFormat
     public enum OrderedListStyle
     {
         Dot = 0,
