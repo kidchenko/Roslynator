@@ -8,7 +8,7 @@ using Pihrtsoft.Markdown.Linq;
 
 namespace Pihrtsoft.Markdown
 {
-    internal class MarkdownTextWriter : MarkdownRawWriter, ITableAnalyzer
+    internal class MarkdownTextWriter : MarkdownBaseWriter, ITableAnalyzer
     {
         private const int BufferSize = 1024 * 6;
         private const int BufferOverflow = 32;
@@ -34,7 +34,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                base.WriteString(text);
+                BeforeWriteString();
 
                 if (string.IsNullOrEmpty(text))
                     return;
@@ -186,7 +186,7 @@ namespace Pihrtsoft.Markdown
 
         public override void WriteRaw(string data)
         {
-            base.WriteRaw(data);
+            BeforeWriteRaw();
 
             if (string.IsNullOrEmpty(data))
                 return;
@@ -248,19 +248,9 @@ namespace Pihrtsoft.Markdown
             }
         }
 
-        public override void WriteLine()
+        protected override void WriteNewLineChars()
         {
-            try
-            {
-                OnBeforeWriteLine();
-                WriteRawUnsafe(NewLineChars);
-                OnAfterWriteLine();
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            WriteRawUnsafe(NewLineChars);
         }
 
         protected override void WriteIndentation(string value)

@@ -6,7 +6,7 @@ using System.Globalization;
 
 namespace Pihrtsoft.Markdown
 {
-    internal abstract class MarkdownRawWriter : MarkdownWriter
+    internal abstract class MarkdownBaseWriter : MarkdownWriter
     {
         private int _lineStartPos;
         private int _emptyLineStartPos = -1;
@@ -23,7 +23,7 @@ namespace Pihrtsoft.Markdown
 
         private readonly List<State> _states = new List<State>();
 
-        protected MarkdownRawWriter(MarkdownWriterSettings settings = null)
+        protected MarkdownBaseWriter(MarkdownWriterSettings settings = null)
         {
             Settings = settings ?? MarkdownWriterSettings.Default;
         }
@@ -1101,7 +1101,7 @@ namespace Pihrtsoft.Markdown
             }
         }
 
-        public override void WriteString(string text)
+        public void BeforeWriteString()
         {
             if (_state == State.Table
                 || _state == State.TableRow)
@@ -1132,7 +1132,7 @@ namespace Pihrtsoft.Markdown
             }
         }
 
-        public override void WriteRaw(string data)
+        public void BeforeWriteRaw()
         {
             if (_state == State.Start)
                 _state = State.Document;
@@ -1183,6 +1183,8 @@ namespace Pihrtsoft.Markdown
 
         protected abstract void WriteIndentation(string value);
 
+        protected abstract void WriteNewLineChars();
+
         protected void OnBeforeWriteLine()
         {
             //TODO: Table
@@ -1203,6 +1205,21 @@ namespace Pihrtsoft.Markdown
                 _emptyLineStartPos = Length;
 
             _lineStartPos = Length;
+        }
+
+        public override void WriteLine()
+        {
+            try
+            {
+                OnBeforeWriteLine();
+                WriteNewLineChars();
+                OnAfterWriteLine();
+            }
+            catch
+            {
+                _state = State.Error;
+                throw;
+            }
         }
 
         internal void WriteLineIfNecessary()

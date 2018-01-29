@@ -8,7 +8,7 @@ using Pihrtsoft.Markdown.Linq;
 
 namespace Pihrtsoft.Markdown
 {
-    internal class MarkdownStringWriter : MarkdownRawWriter, ITableAnalyzer
+    internal class MarkdownStringWriter : MarkdownBaseWriter, ITableAnalyzer
     {
         private readonly StringBuilder _sb;
         private readonly IFormatProvider _formatProvider;
@@ -57,7 +57,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                base.WriteString(text);
+                BeforeWriteString();
 
                 ThrowIfClosed();
 
@@ -166,7 +166,7 @@ namespace Pihrtsoft.Markdown
         {
             try
             {
-                base.WriteRaw(data);
+                BeforeWriteRaw();
                 ThrowIfClosed();
                 _sb.Append(data);
             }
@@ -191,20 +191,10 @@ namespace Pihrtsoft.Markdown
             }
         }
 
-        public override void WriteLine()
+        protected override void WriteNewLineChars()
         {
-            try
-            {
-                OnBeforeWriteLine();
-                ThrowIfClosed();
-                _sb.Append(NewLineChars);
-                OnAfterWriteLine();
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            ThrowIfClosed();
+            _sb.Append(NewLineChars);
         }
 
         public override void WriteValue(int value)

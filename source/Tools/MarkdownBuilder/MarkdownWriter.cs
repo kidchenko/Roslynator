@@ -29,12 +29,20 @@ namespace Pihrtsoft.Markdown
 
         internal string NewLineChars => Settings.NewLineChars;
 
-        public static MarkdownWriter Create(StringBuilder output, IFormatProvider formatProvider = null, MarkdownWriterSettings settings = null)
+        public static MarkdownWriter Create(StringBuilder output, MarkdownWriterSettings settings = null)
+        {
+            return Create(output, CultureInfo.InvariantCulture, settings);
+        }
+
+        public static MarkdownWriter Create(StringBuilder output, IFormatProvider formatProvider, MarkdownWriterSettings settings = null)
         {
             if (output == null)
                 throw new ArgumentNullException(nameof(output));
 
-            return new MarkdownStringWriter(output, formatProvider ?? CultureInfo.InvariantCulture, settings);
+            if (formatProvider == null)
+                throw new ArgumentNullException(nameof(formatProvider));
+
+            return new MarkdownStringWriter(output, formatProvider, settings);
         }
 
         public static MarkdownWriter Create(TextWriter output, MarkdownWriterSettings settings = null)
@@ -45,12 +53,20 @@ namespace Pihrtsoft.Markdown
             return new MarkdownTextWriter(output, settings);
         }
 
-        public static MarkdownWriter Create(Stream stream, Encoding encoding = null, MarkdownWriterSettings settings = null)
+        public static MarkdownWriter Create(Stream stream, MarkdownWriterSettings settings = null)
+        {
+            return Create(stream, Encoding.UTF8, settings);
+        }
+
+        public static MarkdownWriter Create(Stream stream, Encoding encoding, MarkdownWriterSettings settings = null)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            return new MarkdownTextWriter(new StreamWriter(stream, encoding ?? Encoding.UTF8), settings);
+            if (encoding == null)
+                throw new ArgumentNullException(nameof(encoding));
+
+            return new MarkdownTextWriter(new StreamWriter(stream, encoding), settings);
         }
 
         public abstract void WriteStartBold();
@@ -147,6 +163,7 @@ namespace Pihrtsoft.Markdown
         public virtual void WriteOrderedItem(int number, string text)
         {
             Error.ThrowOnInvalidItemNumber(number);
+
             WriteStartOrderedItem(number);
             WriteString(text);
             WriteEndOrderedItem();
