@@ -317,7 +317,7 @@ namespace Pihrtsoft.Markdown.Tests
 
         public static MarkdownWriter CreateBuilder(StringBuilder sb, MarkdownFormat format = null)
         {
-            return MarkdownWriter.Create(sb, MarkdownWriterSettings.From(format));
+            return MarkdownWriter.Create(sb, settings: MarkdownWriterSettings.From(format));
         }
 
         public static int IntValue()
