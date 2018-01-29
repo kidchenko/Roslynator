@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace Pihrtsoft.Markdown
 {
-    [DebuggerDisplay("Text = {Text,nq} Count = {Count}{SeparatorDebuggerDisplay,nq}")]
+    [DebuggerDisplay("{Text,nq} {Count}{SeparatorDebuggerDisplay,nq}")]
     public struct HorizontalRuleFormat : IEquatable<HorizontalRuleFormat>
     {
         internal const string DefaultValue = "-";

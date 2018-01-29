@@ -8,7 +8,7 @@ using Pihrtsoft.Markdown.Linq;
 
 namespace Pihrtsoft.Markdown
 {
-    internal class MarkdownTextWriter : MarkdownWriter, ITableAnalyzer
+    internal class MarkdownTextWriter : MarkdownRawWriter, ITableAnalyzer
     {
         private const int BufferSize = 1024 * 6;
         private const int BufferOverflow = 32;

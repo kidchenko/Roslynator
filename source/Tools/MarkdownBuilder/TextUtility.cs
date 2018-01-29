@@ -9,12 +9,15 @@ namespace Pihrtsoft.Markdown
             if (s == null)
                 return true;
 
-            for (int i = 0; i < s.Length; i++)
+            int length = s.Length;
+
+            if (length == 0)
+                return true;
+
+            for (int i = 0; i < length; i++)
             {
                 if (s[i] != ' ')
-                {
                     return false;
-                }
             }
 
             return true;
@@ -27,17 +30,35 @@ namespace Pihrtsoft.Markdown
 
         public static bool IsAlphanumeric(string s)
         {
-            if (string.IsNullOrEmpty(s))
+            if (s == null)
                 return false;
 
-            for (int i = 0; i < s.Length; i++)
+            int length = s.Length;
+
+            if (length == 0)
+                return false;
+
+            for (int i = 0; i < length; i++)
             {
-                if (!(i >= 48 && i <= 57) // 0-9
-                    && !(i >= 65 && i <= 90) // A-Z
-                    && !(i >= 97 && i <= 122)) // a-z
+                char ch = s[i];
+
+                if (ch >= 48
+                    && ch <= 122)
                 {
-                    return false;
+                    if (ch <= 57) // 0-9
+                        continue;
+
+                    if (ch >= 97) // a-z
+                        continue;
+
+                    if (ch >= 65
+                        && ch <= 90) // A-Z
+                    {
+                        continue;
+                    }
                 }
+
+                return false;
             }
 
             return true;
