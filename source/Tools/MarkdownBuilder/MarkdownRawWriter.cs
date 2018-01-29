@@ -676,7 +676,6 @@ namespace Pihrtsoft.Markdown
             try
             {
                 Push(State.BlockQuote);
-
                 WriteLineIfNecessary();
             }
             catch
@@ -1148,7 +1147,7 @@ namespace Pihrtsoft.Markdown
                 WriteRaw(data);
         }
 
-        protected void WriteIndentation()
+        private void WriteIndentation()
         {
             for (int i = 0; i < _states.Count; i++)
                 WriteIndentation(_states[i]);
