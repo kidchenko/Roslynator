@@ -263,6 +263,19 @@ namespace Pihrtsoft.Markdown
             }
         }
 
+        protected override void WriteIndentation(string value)
+        {
+            try
+            {
+                WriteRawUnsafe(value);
+            }
+            catch
+            {
+                _state = State.Error;
+                throw;
+            }
+        }
+
         public override void WriteValue(int value)
         {
             WriteString(value.ToString(_writer.FormatProvider));

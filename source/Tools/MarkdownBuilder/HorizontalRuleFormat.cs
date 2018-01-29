@@ -5,27 +5,26 @@ using System.Diagnostics;
 
 namespace Pihrtsoft.Markdown
 {
-    [DebuggerDisplay("{Text,nq} {Count}{SeparatorDebuggerDisplay,nq}")]
+    [DebuggerDisplay("{HorizontalRuleStyle} {Count}{SeparatorDebuggerDisplay,nq}")]
     public struct HorizontalRuleFormat : IEquatable<HorizontalRuleFormat>
     {
-        internal const string DefaultValue = "-";
+        internal const HorizontalRuleStyle DefaultStyle = HorizontalRuleStyle.Hyphen;
         internal const int DefaultCount = 3;
         internal const string DefaultSeparator = " ";
 
-        public HorizontalRuleFormat(string text, int count, string separator)
+        public HorizontalRuleFormat(HorizontalRuleStyle style, int count, string separator)
         {
-            Error.ThrowOnInvalidHorizontalRuleText(text);
             Error.ThrowOnInvalidHorizontalRuleCount(count);
             Error.ThrowOnInvalidHorizontalRuleSeparator(separator);
 
-            Text = text;
+            Style = style;
             Count = count;
             Separator = separator;
         }
 
-        public static HorizontalRuleFormat Default { get; } = new HorizontalRuleFormat(DefaultValue, DefaultCount, DefaultSeparator);
+        public static HorizontalRuleFormat Default { get; } = new HorizontalRuleFormat(DefaultStyle, DefaultCount, DefaultSeparator);
 
-        public string Text { get; }
+        public HorizontalRuleStyle Style { get; }
 
         public int Count { get; }
 
@@ -40,21 +39,9 @@ namespace Pihrtsoft.Markdown
         {
             get
             {
-                return IsValidText(Text)
-                    && IsValidCount(Count)
+                return IsValidCount(Count)
                     && IsValidSeparator(Separator);
             }
-        }
-
-        internal static bool IsValidText(string text)
-        {
-            if (text == null)
-                return false;
-
-            if (text.Length != 1)
-                return false;
-
-            return text == "-" || text == "_" || text == "*";
         }
 
         internal static bool IsValidCount(int count)
@@ -84,14 +71,14 @@ namespace Pihrtsoft.Markdown
 
         public bool Equals(HorizontalRuleFormat other)
         {
-            return Text == other.Text
+            return Style == other.Style
                    && Count == other.Count
                    && Separator == other.Separator;
         }
 
         public override int GetHashCode()
         {
-            return Hash.Combine(Text, Hash.Combine(Count, Hash.Create(Separator)));
+            return Hash.Combine((int)Style, Hash.Combine(Count, Hash.Create(Separator)));
         }
 
         public static bool operator ==(HorizontalRuleFormat format1, HorizontalRuleFormat format2)

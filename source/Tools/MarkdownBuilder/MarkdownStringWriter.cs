@@ -177,6 +177,20 @@ namespace Pihrtsoft.Markdown
             }
         }
 
+        protected override void WriteIndentation(string value)
+        {
+            try
+            {
+                ThrowIfClosed();
+                _sb.Append(value);
+            }
+            catch
+            {
+                _state = State.Error;
+                throw;
+            }
+        }
+
         public override void WriteLine()
         {
             try

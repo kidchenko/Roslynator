@@ -29,10 +29,6 @@ namespace Pihrtsoft.Markdown
 
         internal string NewLineChars => Settings.NewLineChars;
 
-        public abstract int QuoteLevel { get; }
-
-        public abstract int ListLevel { get; }
-
         public static MarkdownWriter Create(StringBuilder output, IFormatProvider formatProvider = null, MarkdownWriterSettings settings = null)
         {
             if (output == null)
@@ -223,10 +219,10 @@ namespace Pihrtsoft.Markdown
 
         public void WriteHorizontalRule(HorizontalRuleFormat format)
         {
-            WriteHorizontalRule(format.Text, format.Count, format.Separator);
+            WriteHorizontalRule(format.Style, format.Count, format.Separator);
         }
 
-        public abstract void WriteHorizontalRule(string text, int count = HorizontalRuleFormat.DefaultCount, string separator = HorizontalRuleFormat.DefaultSeparator);
+        public abstract void WriteHorizontalRule(HorizontalRuleStyle style, int count = HorizontalRuleFormat.DefaultCount, string separator = HorizontalRuleFormat.DefaultSeparator);
 
         public abstract void WriteStartTable(int columnCount);
 

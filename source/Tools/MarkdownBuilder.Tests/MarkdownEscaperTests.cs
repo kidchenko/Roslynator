@@ -105,7 +105,7 @@ namespace Pihrtsoft.Markdown.Tests
         [InlineData('-', false)]
         [InlineData('.', false)]
         [InlineData('!', false)]
-        [InlineData('<', false)]
+        [InlineData('<', true)]
         [InlineData('>', false)]
         [InlineData('"', false)]
         [InlineData('\'', false)]

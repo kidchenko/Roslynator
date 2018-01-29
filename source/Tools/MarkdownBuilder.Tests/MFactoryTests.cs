@@ -269,9 +269,9 @@ namespace Pihrtsoft.Markdown.Tests
         }
 
         [Fact]
-        public void MarkdownFactory_QuoteBlock()
+        public void MarkdownFactory_BlockQuote()
         {
-            string text = QuoteBlockText();
+            string text = BlockQuoteText();
 
             MBlockQuote block = MFactory.BlockQuote(text);
 
@@ -279,32 +279,32 @@ namespace Pihrtsoft.Markdown.Tests
         }
 
         [Theory]
-        [InlineData("*")]
-        [InlineData("-")]
-        [InlineData("_")]
-        public void MarkdownFactory_HorizontalRule_DefaultValues(string text)
+        [InlineData(HorizontalRuleStyle.Asterisk)]
+        [InlineData(HorizontalRuleStyle.Hyphen)]
+        [InlineData(HorizontalRuleStyle.Underscore)]
+        public void MarkdownFactory_HorizontalRule_DefaultValues(HorizontalRuleStyle style)
         {
             for (int i = 3; i <= 5; i++)
             {
-                Assert.Equal(text, MFactory.HorizontalRule(text, count: i).Text);
-                Assert.Equal(i, MFactory.HorizontalRule(text, count: i).Count);
-                Assert.Equal(" ", MFactory.HorizontalRule(text, count: i).Separator);
+                Assert.Equal(style, MFactory.HorizontalRule(style, count: i).Style);
+                Assert.Equal(i, MFactory.HorizontalRule(style, count: i).Count);
+                Assert.Equal(" ", MFactory.HorizontalRule(style, count: i).Separator);
             }
         }
 
         [Theory]
-        [InlineData("*")]
-        [InlineData("-")]
-        [InlineData("_")]
-        public void MarkdownFactory_HorizontalRule(string text)
+        [InlineData(HorizontalRuleStyle.Asterisk)]
+        [InlineData(HorizontalRuleStyle.Hyphen)]
+        [InlineData(HorizontalRuleStyle.Underscore)]
+        public void MarkdownFactory_HorizontalRule(HorizontalRuleStyle style)
         {
             for (int i = 3; i <= 5; i++)
             {
-                Assert.Equal(text, MFactory.HorizontalRule(text, count: i, separator: " ").Text);
-                Assert.Equal(i, MFactory.HorizontalRule(text, count: i, separator: " ").Count);
-                Assert.Equal("", MFactory.HorizontalRule(text, count: i, separator: null).Separator);
-                Assert.Equal("", MFactory.HorizontalRule(text, count: i, separator: "").Separator);
-                Assert.Equal("  ", MFactory.HorizontalRule(text, count: i, separator: "  ").Separator);
+                Assert.Equal(style, MFactory.HorizontalRule(style, count: i, separator: " ").Style);
+                Assert.Equal(i, MFactory.HorizontalRule(style, count: i, separator: " ").Count);
+                Assert.Null(MFactory.HorizontalRule(style, count: i, separator: null).Separator);
+                Assert.Equal("", MFactory.HorizontalRule(style, count: i, separator: "").Separator);
+                Assert.Equal("  ", MFactory.HorizontalRule(style, count: i, separator: "  ").Separator);
             }
         }
 
@@ -316,9 +316,9 @@ namespace Pihrtsoft.Markdown.Tests
         {
             MarkdownWriter mb = CreateWriter();
 
-            Assert.Throws<ArgumentOutOfRangeException>(() => mb.Write(MFactory.HorizontalRule(text: "*", count: count, separator: " ")));
-            Assert.Throws<ArgumentOutOfRangeException>(() => mb.Write(MFactory.HorizontalRule(text: "-", count: count, separator: " ")));
-            Assert.Throws<ArgumentOutOfRangeException>(() => mb.Write(MFactory.HorizontalRule(text: "_", count: count, separator: " ")));
+            Assert.Throws<ArgumentOutOfRangeException>(() => mb.Write(MFactory.HorizontalRule(style: HorizontalRuleStyle.Asterisk, count: count, separator: " ")));
+            Assert.Throws<ArgumentOutOfRangeException>(() => mb.Write(MFactory.HorizontalRule(style: HorizontalRuleStyle.Hyphen, count: count, separator: " ")));
+            Assert.Throws<ArgumentOutOfRangeException>(() => mb.Write(MFactory.HorizontalRule(style: HorizontalRuleStyle.Underscore, count: count, separator: " ")));
         }
 
         [Fact]

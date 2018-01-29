@@ -458,9 +458,9 @@ namespace Pihrtsoft.Markdown.Linq
             return new MHorizontalRule(format);
         }
 
-        public static MHorizontalRule HorizontalRule(string text, int count = HorizontalRuleFormat.DefaultCount, string separator = HorizontalRuleFormat.DefaultSeparator)
+        public static MHorizontalRule HorizontalRule(HorizontalRuleStyle style, int count = HorizontalRuleFormat.DefaultCount, string separator = HorizontalRuleFormat.DefaultSeparator)
         {
-            return new MHorizontalRule(text, count, separator);
+            return new MHorizontalRule(style, count, separator);
         }
 
         public static MCharEntity CharEntity(char value)

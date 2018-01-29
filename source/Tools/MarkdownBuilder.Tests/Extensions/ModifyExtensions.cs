@@ -113,7 +113,15 @@ namespace Pihrtsoft.Markdown.Tests
 
         public static HorizontalRuleFormat Modify(this HorizontalRuleFormat format)
         {
-            return new HorizontalRuleFormat(format.Text.Modify(), format.Count.Modify(), format.Separator.Modify());
+            HorizontalRuleStyle style = format.Style;
+
+            do
+            {
+                style = HorizontalRuleStyle();
+
+            } while (style != format.Style);
+
+            return new HorizontalRuleFormat(style, format.Count.Modify(3, 10), format.Separator + " ");
         }
 
         public static BulletListStyle Modify(this BulletListStyle style)

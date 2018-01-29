@@ -54,7 +54,7 @@ namespace Pihrtsoft.Markdown.Linq
             switch (format)
             {
                 case CharEntityFormat.Hexadecimal:
-                    return ((int)Value).ToString("x", CultureInfo.InvariantCulture);
+                    return ((int)Value).ToString("X", CultureInfo.InvariantCulture);
                 case CharEntityFormat.Decimal:
                     return ((int)Value).ToString(CultureInfo.InvariantCulture);
                 default:
