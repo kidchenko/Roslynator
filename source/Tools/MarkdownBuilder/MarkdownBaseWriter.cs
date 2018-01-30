@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 
 namespace Pihrtsoft.Markdown
@@ -21,7 +22,7 @@ namespace Pihrtsoft.Markdown
 
         protected State _state;
 
-        private readonly List<State> _states = new List<State>();
+        private readonly Collection<State> _states = new Collection<State>();
 
         protected MarkdownBaseWriter(MarkdownWriterSettings settings = null)
         {
@@ -90,7 +91,7 @@ namespace Pihrtsoft.Markdown
             State newState = _stateTable[((int)_state * 15) + (int)state - 1];
 
             if (newState == State.Error)
-                throw new InvalidOperationException($"Cannot move from from state '{_state}' to state '{state}'.");
+                throw new InvalidOperationException($"Cannot write '{state}' when state is '{_state}'.");
 
             _states.Add((_state == State.Start) ? State.Document : _state);
             _state = newState;
@@ -101,10 +102,10 @@ namespace Pihrtsoft.Markdown
             int count = _states.Count;
 
             if (count == 0)
-                throw new InvalidOperationException($"Cannot move from from state '{_state}' to state '{state}'.");
+                throw new InvalidOperationException($"Cannot close '{state}' when state is '{_state}'.");
 
             if (_state != state)
-                throw new InvalidOperationException($"Cannot move from from state '{_state}' to state '{state}'.");
+                throw new InvalidOperationException($"Cannot close '{state}' when state is '{_state}'.");
 
             _state = _states[count - 1];
             _states.RemoveAt(count - 1);
