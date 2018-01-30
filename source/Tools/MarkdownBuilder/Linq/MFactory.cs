@@ -458,9 +458,9 @@ namespace Pihrtsoft.Markdown.Linq
             return new MHorizontalRule(format);
         }
 
-        public static MHorizontalRule HorizontalRule(string text, int count = HorizontalRuleFormat.DefaultCount, string separator = HorizontalRuleFormat.DefaultSeparator)
+        public static MHorizontalRule HorizontalRule(HorizontalRuleStyle style, int count = HorizontalRuleFormat.DefaultCount, string separator = HorizontalRuleFormat.DefaultSeparator)
         {
-            return new MHorizontalRule(text, count, separator);
+            return new MHorizontalRule(style, count, separator);
         }
 
         public static MCharEntity CharEntity(char value)
@@ -505,17 +505,17 @@ namespace Pihrtsoft.Markdown.Linq
             return new MTable(other);
         }
 
-        public static MTableColumn TableColumn(Alignment alignment)
+        public static MTableColumn TableColumn(HorizontalAlignment alignment)
         {
             return new MTableColumn(alignment);
         }
 
-        public static MTableColumn TableColumn(Alignment alignment, object content)
+        public static MTableColumn TableColumn(HorizontalAlignment alignment, object content)
         {
             return new MTableColumn(alignment, content);
         }
 
-        public static MTableColumn TableColumn(Alignment alignment, params object[] content)
+        public static MTableColumn TableColumn(HorizontalAlignment alignment, params object[] content)
         {
             return new MTableColumn(alignment, content);
         }

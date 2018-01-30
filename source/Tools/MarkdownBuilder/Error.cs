@@ -33,10 +33,10 @@ namespace Pihrtsoft.Markdown
             }
         }
 
-        public static void ThrowOnInvalidHorizontalRuleText(string text)
+        public static void ThrowOnInvalidHorizontalRuleFormat(HorizontalRuleFormat format)
         {
-            if (!HorizontalRuleFormat.IsValidText(text))
-                throw new ArgumentException("Horizontal rule text must be equal to '-', '_' or '*'.", nameof(text));
+            ThrowOnInvalidHorizontalRuleCount(format.Count);
+            ThrowOnInvalidHorizontalRuleSeparator(format.Separator);
         }
 
         public static void ThrowOnInvalidHorizontalRuleCount(int count)

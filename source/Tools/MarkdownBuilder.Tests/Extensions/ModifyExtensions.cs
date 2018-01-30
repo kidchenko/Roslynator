@@ -113,7 +113,15 @@ namespace Pihrtsoft.Markdown.Tests
 
         public static HorizontalRuleFormat Modify(this HorizontalRuleFormat format)
         {
-            return new HorizontalRuleFormat(format.Text.Modify(), format.Count.Modify(), format.Separator.Modify());
+            HorizontalRuleStyle style = format.Style;
+
+            do
+            {
+                style = HorizontalRuleStyle();
+
+            } while (style != format.Style);
+
+            return new HorizontalRuleFormat(style, format.Count.Modify(3, 10), format.Separator + " ");
         }
 
         public static BulletListStyle Modify(this BulletListStyle style)
@@ -214,16 +222,16 @@ namespace Pihrtsoft.Markdown.Tests
             }
         }
 
-        public static Alignment Modify(this Alignment alignment)
+        public static HorizontalAlignment Modify(this HorizontalAlignment alignment)
         {
             switch (alignment)
             {
-                case Alignment.Left:
-                    return Alignment.Center;
-                case Alignment.Center:
-                    return Alignment.Right;
-                case Alignment.Right:
-                    return Alignment.Left;
+                case HorizontalAlignment.Left:
+                    return HorizontalAlignment.Center;
+                case HorizontalAlignment.Center:
+                    return HorizontalAlignment.Right;
+                case HorizontalAlignment.Right:
+                    return HorizontalAlignment.Left;
                 default:
                     throw new ArgumentException(alignment.ToString(), nameof(alignment));
             }

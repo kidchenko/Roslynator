@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Josef Pihrt. All rights reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Pihrtsoft.Markdown.Linq
 {
@@ -31,12 +32,23 @@ namespace Pihrtsoft.Markdown.Linq
         {
             IEnumerable<MElement> rows = Elements();
 
-            IReadOnlyList<TableColumnInfo> columns = writer.AnalyzeTable(rows);
+            IReadOnlyList<TableColumnInfo> columns = (writer as ITableAnalyzer)?.AnalyzeTable(rows);
 
-            if (columns == null)
-                return;
+            if (columns != null)
+            {
+                writer.WriteStartTable(columns);
+            }
+            else
+            {
+                MElement header = rows.FirstOrDefault();
 
-            writer.WriteStartTable(columns);
+                if (header == null)
+                    return;
+
+                int columnCount = (header as MContainer)?.Elements().Count() ?? 1;
+
+                writer.WriteStartTable(columnCount);
+            }
 
             using (IEnumerator<MElement> en = rows.GetEnumerator())
             {
@@ -60,12 +72,8 @@ namespace Pihrtsoft.Markdown.Linq
 
         internal override void ValidateElement(MElement element)
         {
-            switch (element.Kind)
-            {
-                case MarkdownKind.TableCell:
-                case MarkdownKind.TableRow:
-                    return;
-            }
+            if (element.Kind == MarkdownKind.TableRow)
+                return;
 
             base.ValidateElement(element);
         }

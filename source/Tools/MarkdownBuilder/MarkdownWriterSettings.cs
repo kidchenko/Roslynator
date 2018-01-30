@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace Pihrtsoft.Markdown
 {
-    [DebuggerDisplay("Encoding = {Encoding.EncodingName,nq} CloseOutput = {CloseOutput}")]
+    [DebuggerDisplay("NewLineHandling = {NewLineHandling} CloseOutput = {CloseOutput}")]
     public class MarkdownWriterSettings
     {
         public MarkdownWriterSettings(

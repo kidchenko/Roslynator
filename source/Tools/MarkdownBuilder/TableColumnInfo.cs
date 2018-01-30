@@ -9,16 +9,16 @@ namespace Pihrtsoft.Markdown
     [DebuggerDisplay("{Alignment} {Width} IsWhiteSpace = {IsWhiteSpace}")]
     public struct TableColumnInfo : IEquatable<TableColumnInfo>
     {
-        public TableColumnInfo(Alignment alignment, int width, bool isWhiteSpace)
+        public TableColumnInfo(HorizontalAlignment alignment, int width, bool isWhiteSpace)
         {
             Alignment = alignment;
             Width = width;
             IsWhiteSpace = isWhiteSpace;
         }
 
-        internal static TableColumnInfo Default { get; } = new TableColumnInfo(Alignment.Left, 0, isWhiteSpace: true);
+        internal static TableColumnInfo Default { get; } = new TableColumnInfo(HorizontalAlignment.Left, 0, isWhiteSpace: true);
 
-        public Alignment Alignment { get; }
+        public HorizontalAlignment Alignment { get; }
 
         public bool IsWhiteSpace { get; }
 
@@ -38,7 +38,7 @@ namespace Pihrtsoft.Markdown
 
         internal static TableColumnInfo Create(MElement element, MarkdownStringWriter writer, int index = 0)
         {
-            Alignment alignment = (element as MTableColumn)?.Alignment ?? Alignment.Left;
+            HorizontalAlignment alignment = (element as MTableColumn)?.Alignment ?? HorizontalAlignment.Left;
 
             int length = writer.Length - index;
 

@@ -41,15 +41,15 @@ namespace Pihrtsoft.Markdown.Tests
         [Fact]
         public void MarkdownFormat_Constructor_HorizontalRule()
         {
-            string text = HorizontalRuleText();
-            int count = HorizontalRuleCount();
-            string space = HorizontalRuleSpace();
+            const HorizontalRuleStyle style = HorizontalRuleStyle.Hyphen;
+            const int count = 3;
+            const string space = " ";
 
-            var horizontalRule = new HorizontalRuleFormat(text, count, space);
+            var horizontalRule = new HorizontalRuleFormat(style, count, space);
 
             var format = new MarkdownFormat();
 
-            Assert.Equal(text, format.HorizontalRuleFormat.Text);
+            Assert.Equal(style, format.HorizontalRuleFormat.Style);
             Assert.Equal(count, format.HorizontalRuleFormat.Count);
             Assert.Equal(space, format.HorizontalRuleFormat.Separator);
         }

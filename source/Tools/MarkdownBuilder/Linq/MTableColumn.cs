@@ -4,21 +4,22 @@ using System.Diagnostics;
 
 namespace Pihrtsoft.Markdown.Linq
 {
+    //MTableHeaderCell
     [DebuggerDisplay("{Kind} {Alignment} {ToStringDebuggerDisplay(),nq}")]
     public class MTableColumn : MContainer
     {
-        public MTableColumn(Alignment alignment)
+        public MTableColumn(HorizontalAlignment alignment)
         {
             Alignment = alignment;
         }
 
-        public MTableColumn(Alignment alignment, object content)
+        public MTableColumn(HorizontalAlignment alignment, object content)
             : base(content)
         {
             Alignment = alignment;
         }
 
-        public MTableColumn(Alignment alignment, params object[] content)
+        public MTableColumn(HorizontalAlignment alignment, params object[] content)
             : base(content)
         {
             Alignment = alignment;
@@ -30,9 +31,9 @@ namespace Pihrtsoft.Markdown.Linq
             Alignment = other.Alignment;
         }
 
-        public Alignment Alignment { get; set; }
+        public HorizontalAlignment Alignment { get; set; }
 
-        public override MarkdownKind Kind => MarkdownKind.TableCell;
+        public override MarkdownKind Kind => MarkdownKind.TableColumn;
 
         public override void WriteTo(MarkdownWriter writer)
         {

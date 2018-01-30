@@ -39,11 +39,11 @@ namespace Pihrtsoft.Markdown.Tests
         [Fact]
         public void HorizontalRule_Constructor_AssignStyle()
         {
-            string text = StringValue();
+            HorizontalRuleStyle style = HorizontalRuleStyle();
 
-            var horizontalRule = new MHorizontalRule(text, HorizontalRuleCount(), HorizontalRuleSpace());
+            var horizontalRule = new MHorizontalRule(style, HorizontalRuleCount(), HorizontalRuleSpace());
 
-            Assert.Equal(text, horizontalRule.Text);
+            Assert.Equal(style, horizontalRule.Style);
         }
 
         [Fact]
@@ -51,7 +51,7 @@ namespace Pihrtsoft.Markdown.Tests
         {
             int count = HorizontalRuleCount();
 
-            var horizontalRule = new MHorizontalRule(HorizontalRuleText(), count, HorizontalRuleSpace());
+            var horizontalRule = new MHorizontalRule(HorizontalRuleStyle(), count, HorizontalRuleSpace());
 
             Assert.Equal(count, horizontalRule.Count);
         }
@@ -61,7 +61,7 @@ namespace Pihrtsoft.Markdown.Tests
         {
             string space = HorizontalRuleSpace();
 
-            var horizontalRule = new MHorizontalRule(HorizontalRuleText(), HorizontalRuleCount(), space);
+            var horizontalRule = new MHorizontalRule(HorizontalRuleStyle(), HorizontalRuleCount(), space);
 
             Assert.Equal(space, horizontalRule.Separator);
         }

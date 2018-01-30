@@ -1,1 +1,0 @@
-﻿patří Before.. After... do MarkdownFormat

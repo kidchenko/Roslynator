@@ -41,7 +41,7 @@ namespace Pihrtsoft.Markdown.Linq
         {
             switch (element.Kind)
             {
-                case MarkdownKind.TableCell:
+                case MarkdownKind.TableColumn:
                     return;
             }
 

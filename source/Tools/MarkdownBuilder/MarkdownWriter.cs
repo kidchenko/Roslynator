@@ -13,47 +13,13 @@ namespace Pihrtsoft.Markdown
     public abstract class MarkdownWriter : IDisposable
     {
         private bool _disposed;
-        private bool _inIndentedCodeBlock;
-
-        private int _lineStartPos;
-        private int _emptyLineStartPos = -1;
-
-        private int _headingLevel = -1;
-
-        private IReadOnlyList<TableColumnInfo> _tableColumns;
-        private int _tableColumnCount = -1;
-        private int _tableRowIndex = -1;
-        private int _tableColumnIndex = -1;
-        private int _tableCellPos = -1;
-
-        protected State _state;
-
-        private readonly Stack<MarkdownKind> _stack = new Stack<MarkdownKind>();
 
         protected MarkdownWriter(MarkdownWriterSettings settings = null)
         {
             Settings = settings ?? MarkdownWriterSettings.Default;
         }
 
-        public virtual WriteState WriteState
-        {
-            get
-            {
-                switch (_state)
-                {
-                    case State.Start:
-                        return WriteState.Start;
-                    case State.Content:
-                        return WriteState.Content;
-                    case State.Closed:
-                        return WriteState.Closed;
-                    case State.Error:
-                        return WriteState.Error;
-                    default:
-                        throw new InvalidOperationException(ErrorMessages.UnknownEnumValue(_state));
-                }
-            }
-        }
+        public abstract WriteState WriteState { get; }
 
         public virtual MarkdownWriterSettings Settings { get; }
 
@@ -63,30 +29,20 @@ namespace Pihrtsoft.Markdown
 
         internal string NewLineChars => Settings.NewLineChars;
 
-        public int QuoteLevel { get; private set; }
-
-        public int ListLevel { get; private set; }
-
-        protected internal abstract int Length { get; set; }
-
-        protected Func<char, bool> ShouldBeEscaped { get; set; } = MarkdownEscaper.ShouldBeEscaped;
-
-        protected char EscapingChar { get; set; } = '\\';
-
-        private TableColumnInfo CurrentColumn => _tableColumns?[_tableColumnIndex] ?? TableColumnInfo.Default;
-
-        private int ColumnCount => _tableColumns?.Count ?? _tableColumnCount;
-
-        private bool IsLastColumn => _tableColumnIndex == ColumnCount - 1;
-
-        private bool IsFirstColumn => _tableColumnIndex == 0;
-
         public static MarkdownWriter Create(StringBuilder output, MarkdownWriterSettings settings = null)
+        {
+            return Create(output, CultureInfo.InvariantCulture, settings);
+        }
+
+        public static MarkdownWriter Create(StringBuilder output, IFormatProvider formatProvider, MarkdownWriterSettings settings = null)
         {
             if (output == null)
                 throw new ArgumentNullException(nameof(output));
 
-            return new MarkdownStringWriter(output, CultureInfo.InvariantCulture, settings);
+            if (formatProvider == null)
+                throw new ArgumentNullException(nameof(formatProvider));
+
+            return new MarkdownStringWriter(output, formatProvider, settings);
         }
 
         public static MarkdownWriter Create(TextWriter output, MarkdownWriterSettings settings = null)
@@ -97,562 +53,148 @@ namespace Pihrtsoft.Markdown
             return new MarkdownTextWriter(output, settings);
         }
 
-        public static MarkdownWriter Create(Stream stream, Encoding encoding = null, MarkdownWriterSettings settings = null)
+        public static MarkdownWriter Create(Stream stream, MarkdownWriterSettings settings = null)
+        {
+            return Create(stream, Encoding.UTF8, settings);
+        }
+
+        public static MarkdownWriter Create(Stream stream, Encoding encoding, MarkdownWriterSettings settings = null)
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            return new MarkdownTextWriter(new StreamWriter(stream, encoding ?? Encoding.UTF8), settings);
+            if (encoding == null)
+                throw new ArgumentNullException(nameof(encoding));
+
+            return new MarkdownTextWriter(new StreamWriter(stream, encoding), settings);
         }
 
-        public void Dispose()
+        public abstract void WriteStartBold();
+
+        public abstract void WriteEndBold();
+
+        public virtual void WriteBold(string text)
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            WriteStartBold();
+            WriteString(text);
+            WriteEndBold();
         }
 
-        protected virtual void Dispose(bool disposing)
+        public abstract void WriteStartItalic();
+
+        public abstract void WriteEndItalic();
+
+        public virtual void WriteItalic(string text)
         {
-            if (!_disposed)
-            {
-                if (disposing
-                    && WriteState != WriteState.Closed)
-                {
-                    Close();
-                }
-
-                _disposed = true;
-            }
+            WriteStartItalic();
+            WriteString(text);
+            WriteEndItalic();
         }
 
-        public virtual void Close()
+        public abstract void WriteStartStrikethrough();
+
+        public abstract void WriteEndStrikethrough();
+
+        public virtual void WriteStrikethrough(string text)
         {
-            Dispose();
+            WriteStartStrikethrough();
+            WriteString(text);
+            WriteEndStrikethrough();
         }
 
-        private void CheckPush(MarkdownKind kind)
+        public abstract void WriteInlineCode(string text);
+
+        public abstract void WriteStartHeading(int level);
+
+        public abstract void WriteEndHeading();
+
+        public virtual void WriteHeading1(string text)
         {
-            Check(kind);
-            _stack.Push(kind);
+            WriteHeading(1, text);
         }
 
-        private void Pop(MarkdownKind _)
+        public virtual void WriteHeading2(string text)
         {
-            _stack.Pop();
+            WriteHeading(2, text);
         }
 
-        internal void Check(MarkdownKind _)
+        public virtual void WriteHeading3(string text)
         {
-            if (_state == State.Closed)
-                throw new InvalidOperationException("Cannot write to a closed writer.");
-
-            if (_state == State.Error)
-                throw new InvalidOperationException("Cannot write to a writer in an error state.");
+            WriteHeading(3, text);
         }
 
-        public MarkdownWriter WriteStartBold()
+        public virtual void WriteHeading4(string text)
         {
-            try
-            {
-                CheckPush(MarkdownKind.Bold);
-                WriteRaw(Format.BoldDelimiter);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            WriteHeading(4, text);
         }
 
-        public MarkdownWriter WriteEndBold()
+        public virtual void WriteHeading5(string text)
         {
-            try
-            {
-                WriteRaw(Format.BoldDelimiter);
-                Pop(MarkdownKind.Bold);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            WriteHeading(5, text);
         }
 
-        public MarkdownWriter WriteBold(string text)
+        public virtual void WriteHeading6(string text)
         {
-            try
-            {
-                WriteStartBold();
-                WriteString(text);
-                WriteEndBold();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            WriteHeading(6, text);
         }
 
-        public MarkdownWriter WriteStartItalic()
+        public virtual void WriteHeading(int level, string text)
         {
-            try
-            {
-                CheckPush(MarkdownKind.Italic);
-                WriteRaw(Format.ItalicDelimiter);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            WriteStartHeading(level);
+            WriteString(text);
+            WriteEndHeading();
         }
 
-        public MarkdownWriter WriteEndItalic()
+        public abstract void WriteStartBulletItem();
+
+        public abstract void WriteEndBulletItem();
+
+        public virtual void WriteBulletItem(string text)
         {
-            try
-            {
-                WriteRaw(Format.ItalicDelimiter);
-                Pop(MarkdownKind.Italic);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            WriteStartBulletItem();
+            WriteString(text);
+            WriteEndBulletItem();
         }
 
-        public MarkdownWriter WriteItalic(string text)
-        {
-            try
-            {
-                WriteStartItalic();
-                WriteString(text);
-                WriteEndItalic();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
+        public abstract void WriteStartOrderedItem(int number);
 
-        public MarkdownWriter WriteStartStrikethrough()
-        {
-            try
-            {
-                CheckPush(MarkdownKind.Strikethrough);
-                WriteRaw("~~");
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
+        public abstract void WriteEndOrderedItem();
 
-        public MarkdownWriter WriteEndStrikethrough()
-        {
-            try
-            {
-                WriteRaw("~~");
-                Pop(MarkdownKind.Strikethrough);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteStrikethrough(string text)
-        {
-            try
-            {
-                WriteStartStrikethrough();
-                WriteString(text);
-                WriteEndStrikethrough();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteInlineCode(string text)
-        {
-            try
-            {
-                Check(MarkdownKind.InlineCode);
-                WriteRaw("`");
-
-                if (!string.IsNullOrEmpty(text))
-                {
-                    if (text[0] == '`')
-                        WriteRaw(" ");
-
-                    WriteString(text, MarkdownEscaper.ShouldBeEscapedInInlineCode, '`');
-
-                    if (text[text.Length - 1] == '`')
-                        WriteRaw(" ");
-                }
-
-                WriteRaw("`");
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteStartHeading(int level)
-        {
-            try
-            {
-                Error.ThrowOnInvalidHeadingLevel(level);
-
-                CheckPush(MarkdownKind.Heading);
-
-                _headingLevel = level;
-
-                bool underline = (level == 1 && Format.UnderlineHeading1)
-                    || (level == 2 && Format.UnderlineHeading2);
-
-                WriteLine(Format.EmptyLineBeforeHeading);
-
-                if (!underline)
-                {
-                    WriteRaw(Format.HeadingStart, level);
-                    WriteRaw(" ");
-                }
-
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteEndHeading()
-        {
-            try
-            {
-                int level = _headingLevel;
-                _headingLevel = -1;
-
-                bool underline = (level == 1 && Format.UnderlineHeading1)
-                    || (level == 2 && Format.UnderlineHeading2);
-
-                if (!underline
-                    && Format.CloseHeading)
-                {
-                    WriteRaw(" ");
-                    WriteRaw(Format.HeadingStart, level);
-                }
-
-                int length = Length - _lineStartPos;
-
-                WriteLineIfNecessary();
-
-                if (underline)
-                {
-                    WriteRaw((level == 1) ? "=" : "-", length);
-                    WriteLine();
-                }
-
-                WriteEmptyLineIf(Format.EmptyLineAfterHeading);
-                Pop(MarkdownKind.Heading);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteHeading1(string text)
-        {
-            return WriteHeading(1, text);
-        }
-
-        public MarkdownWriter WriteHeading2(string text)
-        {
-            return WriteHeading(2, text);
-        }
-
-        public MarkdownWriter WriteHeading3(string text)
-        {
-            return WriteHeading(3, text);
-        }
-
-        public MarkdownWriter WriteHeading4(string text)
-        {
-            return WriteHeading(4, text);
-        }
-
-        public MarkdownWriter WriteHeading5(string text)
-        {
-            return WriteHeading(5, text);
-        }
-
-        public MarkdownWriter WriteHeading6(string text)
-        {
-            return WriteHeading(6, text);
-        }
-
-        public MarkdownWriter WriteHeading(int level, string text)
-        {
-            try
-            {
-                WriteStartHeading(level);
-                WriteString(text);
-                WriteEndHeading();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteStartBulletItem()
-        {
-            try
-            {
-                CheckPush(MarkdownKind.BulletItem);
-                WriteLineIfNecessary();
-                WriteRaw(Format.BulletItemStart);
-                ListLevel++;
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteEndBulletItem()
-        {
-            try
-            {
-                Pop(MarkdownKind.BulletItem);
-                ListLevel--;
-                WriteLine();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteBulletItem(string text)
-        {
-            try
-            {
-                WriteStartBulletItem();
-                WriteString(text);
-                WriteEndBulletItem();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteStartOrderedItem(int number)
-        {
-            try
-            {
-                Error.ThrowOnInvalidItemNumber(number);
-                CheckPush(MarkdownKind.OrderedItem);
-                WriteLineIfNecessary();
-                WriteValue(number);
-                WriteRaw(Format.OrderedItemStart);
-                ListLevel++;
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteEndOrderedItem()
-        {
-            try
-            {
-                Pop(MarkdownKind.OrderedItem);
-                ListLevel--;
-                WriteLineIfNecessary();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteOrderedItem(int number, string text)
+        public virtual void WriteOrderedItem(int number, string text)
         {
             Error.ThrowOnInvalidItemNumber(number);
 
-            try
-            {
-                WriteStartOrderedItem(number);
-                WriteString(text);
-                WriteEndOrderedItem();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            WriteStartOrderedItem(number);
+            WriteString(text);
+            WriteEndOrderedItem();
         }
 
-        public MarkdownWriter WriteStartTaskItem(bool isCompleted = false)
+        public abstract void WriteStartTaskItem(bool isCompleted = false);
+
+        public abstract void WriteEndTaskItem();
+
+        public virtual void WriteTaskItem(string text, bool isCompleted = false)
         {
-            try
-            {
-                CheckPush(MarkdownKind.TaskItem);
-                WriteLineIfNecessary();
-
-                if (isCompleted)
-                {
-                    WriteRaw("- [x] ");
-                }
-                else
-                {
-                    WriteRaw("- [ ] ");
-                }
-
-                ListLevel++;
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            WriteStartTaskItem(isCompleted: isCompleted);
+            WriteString(text);
+            WriteEndTaskItem();
         }
 
-        public MarkdownWriter WriteStartCompletedTaskItem()
+        public void WriteStartCompletedTaskItem()
         {
-            return WriteStartTaskItem(isCompleted: true);
+            WriteStartTaskItem(isCompleted: true);
         }
 
-        public MarkdownWriter WriteEndTaskItem()
+        public void WriteCompletedTaskItem(string text)
         {
-            try
-            {
-                Pop(MarkdownKind.TaskItem);
-                ListLevel--;
-                WriteLineIfNecessary();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            WriteTaskItem(text, isCompleted: true);
         }
 
-        public MarkdownWriter WriteTaskItem(string text)
-        {
-            try
-            {
-                WriteStartTaskItem();
-                WriteString(text);
-                WriteEndTaskItem();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
+        public abstract void WriteImage(string text, string url, string title = null);
 
-        public MarkdownWriter WriteCompletedTaskItem(string text)
-        {
-            try
-            {
-                WriteStartCompletedTaskItem();
-                WriteString(text);
-                WriteEndTaskItem();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
+        public abstract void WriteLink(string text, string url, string title = null);
 
-        public MarkdownWriter WriteImage(string text, string url, string title = null)
-        {
-            if (text == null)
-                throw new ArgumentNullException(nameof(text));
-
-            Error.ThrowOnInvalidUrl(url);
-
-            try
-            {
-                Check(MarkdownKind.Image);
-                WriteRaw("!");
-                WriteLinkCore(text, url, title);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteLink(string text, string url, string title = null)
-        {
-            if (text == null)
-                throw new ArgumentNullException(nameof(text));
-
-            Error.ThrowOnInvalidUrl(url);
-
-            try
-            {
-                Check(MarkdownKind.Link);
-                WriteLinkCore(text, url, title);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteLinkOrText(string text, string url = null, string title = null)
+        public void WriteLinkOrText(string text, string url = null, string title = null)
         {
             if (!string.IsNullOrEmpty(url))
             {
@@ -662,641 +204,88 @@ namespace Pihrtsoft.Markdown
             {
                 WriteString(text);
             }
-
-            return this;
         }
 
-        private MarkdownWriter WriteLinkCore(string text, string url, string title)
+        public abstract void WriteAutolink(string url);
+
+        public abstract void WriteImageReference(string text, string label);
+
+        public abstract void WriteLinkReference(string text, string label = null);
+
+        public abstract void WriteLabel(string label, string url, string title = null);
+
+        public abstract void WriteIndentedCodeBlock(string text);
+
+        public abstract void WriteFencedCodeBlock(string text, string info = null);
+
+        public abstract void WriteStartBlockQuote();
+
+        public abstract void WriteEndBlockQuote();
+
+        public virtual void WriteBlockQuote(string text)
         {
-            WriteSquareBrackets(text);
-            WriteRaw("(");
-            WriteString(url, MarkdownEscaper.ShouldBeEscapedInLinkUrl);
-            WriteLinkTitle(title);
-            WriteRaw(")");
-            return this;
+            WriteStartBlockQuote();
+            WriteString(text);
+            WriteEndBlockQuote();
         }
 
-        public MarkdownWriter WriteAutolink(string url)
+        public void WriteHorizontalRule()
         {
-                Error.ThrowOnInvalidUrl(url);
-
-            try
-            {
-                Check(MarkdownKind.Autolink);
-                WriteAngleBrackets(url);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            WriteHorizontalRule(Format.HorizontalRuleFormat);
         }
 
-        public MarkdownWriter WriteImageReference(string text, string label)
+        public void WriteHorizontalRule(HorizontalRuleFormat format)
         {
-            try
-            {
-                Check(MarkdownKind.ImageReference);
-                WriteRaw("!");
-                WriteLinkReferenceCore(text, label);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
+            WriteHorizontalRule(format.Style, format.Count, format.Separator);
         }
 
-        public MarkdownWriter WriteLinkReference(string text, string label = null)
+        public abstract void WriteHorizontalRule(HorizontalRuleStyle style, int count = HorizontalRuleFormat.DefaultCount, string separator = HorizontalRuleFormat.DefaultSeparator);
+
+        public abstract void WriteStartTable(int columnCount);
+
+        public abstract void WriteStartTable(IReadOnlyList<TableColumnInfo> columns);
+
+        public abstract void WriteEndTable();
+
+        internal void WriteTableRow(MElement content)
         {
-            try
+            WriteStartTableRow();
+
+            if (content is MContainer container)
             {
-                Check(MarkdownKind.LinkReference);
-                WriteLinkReferenceCore(text, label);
-                return this;
+                foreach (MElement element in container.Elements())
+                    WriteTableCell(element);
             }
-            catch
+            else
             {
-                _state = State.Error;
-                throw;
+                WriteTableCell(content);
             }
-        }
 
-        private MarkdownWriter WriteLinkReferenceCore(string text, string label = null)
-        {
-            WriteSquareBrackets(text);
-            WriteSquareBrackets(label);
-            return this;
-        }
+            WriteEndTableRow();
 
-        public MarkdownWriter WriteLabel(string label, string url, string title = null)
-        {
-                Error.ThrowOnInvalidUrl(url);
-
-            try
-            {
-                Check(MarkdownKind.Label);
-                WriteLineIfNecessary();
-                WriteSquareBrackets(label);
-                WriteRaw(": ");
-                WriteAngleBrackets(url);
-                WriteLinkTitle(title);
-                WriteLineIfNecessary();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        private void WriteLinkTitle(string title)
-        {
-            if (!string.IsNullOrEmpty(title))
-            {
-                WriteRaw(" ");
-                WriteRaw("\"");
-                WriteString(title, MarkdownEscaper.ShouldBeEscapedInLinkTitle);
-                WriteRaw("\"");
-            }
-        }
-
-        private void WriteSquareBrackets(string text)
-        {
-            WriteRaw("[");
-            WriteString(text, MarkdownEscaper.ShouldBeEscapedInLinkText);
-            WriteRaw("]");
-        }
-
-        private void WriteAngleBrackets(string text)
-        {
-            WriteRaw("<");
-            WriteString(text, MarkdownEscaper.ShouldBeEscapedInAngleBrackets);
-            WriteRaw(">");
-        }
-
-        public MarkdownWriter WriteIndentedCodeBlock(string text)
-        {
-            try
-            {
-                Check(MarkdownKind.IndentedCodeBlock);
-
-                WriteLine(Format.EmptyLineBeforeCodeBlock);
-
-                _inIndentedCodeBlock = true;
-                WriteString(text, _ => false);
-                _inIndentedCodeBlock = false;
-                WriteLine();
-                WriteEmptyLineIf(Format.EmptyLineAfterCodeBlock);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteFencedCodeBlock(string text, string info = null)
-        {
-                Error.ThrowOnInvalidFencedCodeBlockInfo(info);
-
-            try
-            {
-                Check(MarkdownKind.FencedCodeBlock);
-
-                WriteLine(Format.EmptyLineBeforeCodeBlock);
-
-                WriteRaw(Format.CodeFence);
-                WriteRaw(info);
-                WriteLine();
-                WriteString(text, _ => false);
-
-                WriteLineIfNecessary();
-
-                WriteRaw(Format.CodeFence);
-
-                WriteLine();
-                WriteEmptyLineIf(Format.EmptyLineAfterCodeBlock);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public void WriteStartBlockQuote()
-        {
-            try
-            {
-                CheckPush(MarkdownKind.BlockQuote);
-                WriteLineIfNecessary();
-                QuoteLevel++;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public void WriteEndBlockQuote()
-        {
-            try
-            {
-                WriteLineIfNecessary();
-                QuoteLevel--;
-                Pop(MarkdownKind.BlockQuote);
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteBlockQuote(string text)
-        {
-            try
-            {
-                QuoteLevel++;
-                WriteString(text);
-                WriteLineIfNecessary();
-                QuoteLevel--;
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteHorizontalRule()
-        {
-            return WriteHorizontalRule(Format.HorizontalRuleFormat);
-        }
-
-        public MarkdownWriter WriteHorizontalRule(HorizontalRuleFormat format)
-        {
-            return WriteHorizontalRule(format.Text, format.Count, format.Separator);
-        }
-
-        public MarkdownWriter WriteHorizontalRule(string text, int count = HorizontalRuleFormat.DefaultCount, string separator = HorizontalRuleFormat.DefaultSeparator)
-        {
-            Error.ThrowOnInvalidHorizontalRuleText(text);
-            Error.ThrowOnInvalidHorizontalRuleCount(count);
-            Error.ThrowOnInvalidHorizontalRuleSeparator(separator);
-
-            try
-            {
-                Check(MarkdownKind.HorizontalRule);
-
-                WriteLineIfNecessary();
-
-                bool isFirst = true;
-
-                for (int i = 0; i < count; i++)
-                {
-                    if (isFirst)
-                    {
-                        isFirst = false;
-                    }
-                    else
-                    {
-                        WriteRaw(separator);
-                    }
-
-                    WriteRaw(text);
-                }
-
-                WriteLine();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteStartTable(int columnCount)
-        {
-            return WriteStartTable(null, columnCount);
-        }
-
-        public MarkdownWriter WriteStartTable(IReadOnlyList<TableColumnInfo> columns)
-        {
-            if (columns == null)
-                throw new ArgumentNullException(nameof(columns));
-
-            return WriteStartTable(columns, columns.Count);
-        }
-
-        private MarkdownWriter WriteStartTable(IReadOnlyList<TableColumnInfo> columns, int columnCount)
-        {
-            try
-            {
-                CheckPush(MarkdownKind.Table);
-
-                WriteLine(Format.EmptyLineBeforeTable);
-
-                _tableColumns = columns;
-                _tableColumnCount = columnCount;
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteEndTable()
-        {
-            try
-            {
-                _tableRowIndex = -1;
-                _tableColumns = null;
-                _tableColumnCount = -1;
-                WriteEmptyLineIf(Format.EmptyLineAfterTable);
-                Pop(MarkdownKind.Table);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        protected internal abstract IReadOnlyList<TableColumnInfo> AnalyzeTable(IEnumerable<MElement> rows);
-
-        internal MarkdownWriter WriteTableRow(MElement content)
-        {
-            try
-            {
-                WriteStartTableRow();
-
-                if (content is MContainer container)
-                {
-                    foreach (MElement element in container.Elements())
-                        WriteTableCell(element);
-                }
-                else
-                {
-                    WriteTableCell(content);
-                }
-
-                WriteEndTableRow();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public void WriteStartTableRow()
-        {
-            try
-            {
-                CheckPush(MarkdownKind.TableRow);
-                _tableRowIndex++;
-                _tableColumnIndex = -1;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public void WriteEndTableRow()
-        {
-            try
-            {
-                if (Format.TableOuterDelimiter
-                    || (_tableRowIndex == 0 && CurrentColumn.IsWhiteSpace))
-                {
-                    WriteTableColumnSeparator();
-                }
-
-                WriteLine();
-                _tableColumnIndex = -1;
-
-                Pop(MarkdownKind.TableRow);
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        internal void WriteTableCell(MElement cell)
-        {
-            try
+            void WriteTableCell(MElement cell)
             {
                 WriteStartTableCell();
                 Write(cell);
                 WriteEndTableCell();
             }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
         }
 
-        public void WriteStartTableCell()
-        {
-            try
-            {
-                CheckPush(MarkdownKind.TableCell);
-                _tableColumnIndex++;
+        public abstract void WriteStartTableRow();
 
-                if (IsFirstColumn)
-                {
-                    if (Format.TableOuterDelimiter
-                        || IsLastColumn
-                        || CurrentColumn.IsWhiteSpace)
-                    {
-                        WriteTableColumnSeparator();
-                    }
-                }
-                else
-                {
-                    WriteTableColumnSeparator();
-                }
+        public abstract void WriteEndTableRow();
 
-                if (_tableRowIndex == 0)
-                {
-                    if (Format.TablePadding)
-                    {
-                        WriteRaw(" ");
-                    }
-                    else if (Format.FormatTableHeader
-                         && CurrentColumn.Alignment == Alignment.Center)
-                    {
-                        WriteRaw(" ");
-                    }
-                }
-                else if (Format.TablePadding)
-                {
-                    WriteRaw(" ");
-                }
+        public abstract void WriteStartTableCell();
 
-                _tableCellPos = Length;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
+        public abstract void WriteEndTableCell();
 
-        public void WriteEndTableCell()
-        {
-            try
-            {
-                if (Format.TableOuterDelimiter
-                    || !IsLastColumn)
-                {
-                    if (_tableRowIndex == 0)
-                    {
-                        if (Format.FormatTableHeader)
-                            WritePadRight(Length - _tableCellPos);
-                    }
-                    else if (Format.FormatTableContent)
-                    {
-                        WritePadRight(Length - _tableCellPos);
-                    }
-                }
+        public abstract void WriteTableHeaderSeparator();
 
-                if (_tableRowIndex == 0)
-                {
-                    if (Format.TablePadding)
-                    {
-                        if (!CurrentColumn.IsWhiteSpace)
-                            WriteRaw(" ");
-                    }
-                    else if (Format.FormatTableHeader
-                         && CurrentColumn.Alignment != Alignment.Left)
-                    {
-                        WriteRaw(" ");
-                    }
-                }
-                else if (Format.TablePadding)
-                {
-                    if (Length - _tableCellPos > 0)
-                        WriteRaw(" ");
-                }
+        public abstract void WriteCharEntity(char value);
 
-                _tableCellPos = -1;
-                Pop(MarkdownKind.TableCell);
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
+        public abstract void WriteEntityRef(string name);
 
-        public void WriteTableHeaderSeparator()
-        {
-            try
-            {
-                WriteLineIfNecessary();
-
-                WriteStartTableRow();
-
-                int count = ColumnCount;
-
-                for (int i = 0; i < count; i++)
-                {
-                    _tableColumnIndex = i;
-
-                    if (IsFirstColumn)
-                    {
-                        if (Format.TableOuterDelimiter
-                            || IsLastColumn
-                            || CurrentColumn.IsWhiteSpace)
-                        {
-                            WriteTableColumnSeparator();
-                        }
-                    }
-                    else
-                    {
-                        WriteTableColumnSeparator();
-                    }
-
-                    if (CurrentColumn.Alignment == Alignment.Center)
-                    {
-                        WriteRaw(":");
-                    }
-                    else if (Format.TablePadding)
-                    {
-                        WriteRaw(" ");
-                    }
-
-                    WriteRaw("---");
-
-                    if (Format.FormatTableHeader)
-                        WritePadRight(3, "-");
-
-                    if (CurrentColumn.Alignment != Alignment.Left)
-                    {
-                        WriteRaw(":");
-                    }
-                    else if (Format.TablePadding)
-                    {
-                        WriteRaw(" ");
-                    }
-                }
-
-                WriteEndTableRow();
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        private MarkdownWriter WriteTableColumnSeparator()
-        {
-            return WriteRaw("|");
-        }
-
-        private void WritePadRight(int width, string padding = " ")
-        {
-            int totalWidth = Math.Max(CurrentColumn.Width, Math.Max(width, 3));
-
-            WriteRaw(padding, totalWidth - width);
-        }
-
-        public MarkdownWriter WriteCharEntity(char value)
-        {
-            Error.ThrowOnInvalidCharEntity(value);
-
-            try
-            {
-                Check(MarkdownKind.CharEntity);
-                WriteRaw("&#");
-
-                if (Format.CharEntityFormat == CharEntityFormat.Hexadecimal)
-                {
-                    WriteRaw("x");
-                    WriteRaw(((int)value).ToString("x", CultureInfo.InvariantCulture));
-                }
-                else if (Format.CharEntityFormat == CharEntityFormat.Decimal)
-                {
-                    WriteRaw(((int)value).ToString(CultureInfo.InvariantCulture));
-                }
-                else
-                {
-                    throw new InvalidOperationException(ErrorMessages.UnknownEnumValue(Format.CharEntityFormat));
-                }
-
-                WriteRaw(";");
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteEntityRef(string name)
-        {
-            try
-            {
-                Check(MarkdownKind.EntityRef);
-                WriteRaw("&");
-                WriteRaw(name);
-                WriteRaw(";");
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public MarkdownWriter WriteComment(string text)
-        {
-            if (!string.IsNullOrEmpty(text))
-            {
-                if (text.IndexOf("--", StringComparison.Ordinal) >= 0)
-                    throw new ArgumentException("XML comment text cannot contain '--'.");
-
-                if (text[text.Length - 1] == '-')
-                    throw new ArgumentException("Last character of XML comment text cannot be '-'.");
-            }
-
-            try
-            {
-                Check(MarkdownKind.Comment);
-                WriteRaw("<!-- ");
-                WriteRaw(text);
-                WriteRaw(" -->");
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
+        public abstract void WriteComment(string text);
 
         internal void Write(object value)
         {
@@ -1336,41 +325,11 @@ namespace Pihrtsoft.Markdown
 
         public abstract void Flush();
 
-        public abstract MarkdownWriter WriteString(string text);
+        public abstract void WriteString(string text);
 
-        private void WriteString(string text, Func<char, bool> shouldBeEscaped, char escapingChar = '\\')
-        {
-            ShouldBeEscaped = shouldBeEscaped;
-            EscapingChar = escapingChar;
-            WriteString(text);
-            EscapingChar = '\\';
-            ShouldBeEscaped = MarkdownEscaper.ShouldBeEscaped;
-        }
+        public abstract void WriteRaw(string data);
 
-        public abstract MarkdownWriter WriteRaw(string data);
-
-        private MarkdownWriter WriteRaw(string data, int repeatCount)
-        {
-            for (int i = 0; i < repeatCount; i++)
-                WriteRaw(data);
-
-            return this;
-        }
-
-        public virtual MarkdownWriter WriteLine()
-        {
-            try
-            {
-                WriteRaw(NewLineChars);
-                OnAfterWriteLine();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
+        public abstract void WriteLine();
 
         public virtual void WriteValue(bool value)
         {
@@ -1402,72 +361,29 @@ namespace Pihrtsoft.Markdown
             WriteString(value.ToString(null, CultureInfo.InvariantCulture));
         }
 
-        protected void WriteIndentation()
+        public void Dispose()
         {
-            for (int i = 0; i < QuoteLevel; i++)
-                WriteRaw("> ");
-
-            for (int i = 0; i < ListLevel; i++)
-                WriteRaw("  ");
-
-            if (_inIndentedCodeBlock)
-                WriteRaw("    ");
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        protected void OnBeforeWriteLine()
+        protected virtual void Dispose(bool disposing)
         {
-            if (_lineStartPos == Length)
+            if (!_disposed)
             {
-                _emptyLineStartPos = _lineStartPos;
-            }
-            else
-            {
-                _emptyLineStartPos = -1;
+                if (disposing
+                    && WriteState != WriteState.Closed)
+                {
+                    Close();
+                }
+
+                _disposed = true;
             }
         }
 
-        protected void OnAfterWriteLine()
+        public virtual void Close()
         {
-            WriteIndentation();
-
-            if (_emptyLineStartPos == _lineStartPos)
-                _emptyLineStartPos = Length;
-
-            _lineStartPos = Length;
-        }
-
-        internal void WriteLineIfNecessary()
-        {
-            if (_lineStartPos != Length)
-                WriteLine();
-        }
-
-        private void WriteEmptyLineIf(bool condition)
-        {
-            if (condition
-                && Length > 0)
-            {
-                WriteLine();
-            }
-        }
-
-        private void WriteLine(bool addEmptyLine)
-        {
-            if (_emptyLineStartPos != Length)
-            {
-                if (_lineStartPos != Length)
-                    WriteLine();
-
-                WriteEmptyLineIf(addEmptyLine);
-            }
-        }
-
-        protected enum State
-        {
-            Start = 0,
-            Content = 1,
-            Closed = 2,
-            Error = 3
+            Dispose();
         }
     }
 }

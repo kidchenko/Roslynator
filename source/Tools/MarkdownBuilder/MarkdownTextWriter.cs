@@ -2,12 +2,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Pihrtsoft.Markdown.Linq;
 
 namespace Pihrtsoft.Markdown
 {
-    internal class MarkdownTextWriter : MarkdownWriter
+    internal class MarkdownTextWriter : MarkdownBaseWriter, ITableAnalyzer
     {
         private const int BufferSize = 1024 * 6;
         private const int BufferOverflow = 32;
@@ -29,15 +30,16 @@ namespace Pihrtsoft.Markdown
 
         protected internal override int Length { get; set; }
 
-        public override MarkdownWriter WriteString(string text)
+        public override void WriteString(string text)
         {
-            if (string.IsNullOrEmpty(text))
-                return this;
-
             try
             {
+                BeforeWriteString();
+
+                if (string.IsNullOrEmpty(text))
+                    return;
+
                 WriteStringUnsafe(text);
-                return this;
             }
             catch
             {
@@ -48,6 +50,8 @@ namespace Pihrtsoft.Markdown
 
         private unsafe void WriteStringUnsafe(string value)
         {
+            Debug.Assert(value != null);
+
             fixed (char* pSrcStart = value)
             {
                 WriteStringUnsafe(pSrcStart, pSrcStart + value.Length);
@@ -168,17 +172,28 @@ namespace Pihrtsoft.Markdown
 
                 _bufPos = (int)(pDst - pDstStart);
             }
+
+            char* WriteNewLineUnsafe(char* pDst)
+            {
+                fixed (char* pDstStart = _bufChars)
+                {
+                    _bufPos = (int)(pDst - pDstStart);
+                    WriteRawUnsafe(NewLineChars);
+                    return pDstStart + _bufPos;
+                }
+            }
         }
 
-        public override MarkdownWriter WriteRaw(string data)
+        public override void WriteRaw(string data)
         {
+            BeforeWriteRaw();
+
             if (string.IsNullOrEmpty(data))
-                return this;
+                return;
 
             try
             {
                 WriteRawUnsafe(data);
-                return this;
             }
             catch
             {
@@ -233,24 +248,16 @@ namespace Pihrtsoft.Markdown
             }
         }
 
-        private unsafe char* WriteNewLineUnsafe(char* pDst)
+        protected override void WriteNewLineChars()
         {
-            fixed (char* pDstStart = _bufChars)
-            {
-                _bufPos = (int)(pDst - pDstStart);
-                WriteRawUnsafe(NewLineChars);
-                return pDstStart + _bufPos;
-            }
+            WriteRawUnsafe(NewLineChars);
         }
 
-        public override MarkdownWriter WriteLine()
+        protected override void WriteIndentation(string value)
         {
             try
             {
-                OnBeforeWriteLine();
-                WriteRawUnsafe(NewLineChars);
-                OnAfterWriteLine();
-                return this;
+                WriteRawUnsafe(value);
             }
             catch
             {
@@ -341,7 +348,7 @@ namespace Pihrtsoft.Markdown
             }
         }
 
-        protected internal override IReadOnlyList<TableColumnInfo> AnalyzeTable(IEnumerable<MElement> rows)
+        public IReadOnlyList<TableColumnInfo> AnalyzeTable(IEnumerable<MElement> rows)
         {
             return TableAnalyzer.Analyze(rows, Settings, _writer.FormatProvider)?.AsReadOnly();
         }

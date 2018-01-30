@@ -30,7 +30,6 @@ namespace Pihrtsoft.Markdown
             CodeFenceStyle = codeFenceStyle;
             CodeBlockOptions = codeBlockOptions;
             CharEntityFormat = charEntityFormat;
-            HorizontalRuleFormat = horizontalRuleFormat ?? HorizontalRuleFormat.Default;
 
             if (BulletListStyle == BulletListStyle.Asterisk)
             {
@@ -109,6 +108,34 @@ namespace Pihrtsoft.Markdown
             {
                 throw new InvalidOperationException(ErrorMessages.UnknownEnumValue(CodeFenceStyle));
             }
+
+            if (horizontalRuleFormat != null)
+            {
+                Error.ThrowOnInvalidHorizontalRuleFormat(horizontalRuleFormat.Value);
+
+                HorizontalRuleFormat = horizontalRuleFormat.Value;
+            }
+            else
+            {
+                HorizontalRuleFormat = HorizontalRuleFormat.Default;
+            }
+
+            if (HorizontalRuleStyle == HorizontalRuleStyle.Hyphen)
+            {
+                HorizontalRuleText = "-";
+            }
+            else if (HorizontalRuleStyle == HorizontalRuleStyle.Underscore)
+            {
+                HorizontalRuleText = "_";
+            }
+            else if (HorizontalRuleStyle == HorizontalRuleStyle.Asterisk)
+            {
+                HorizontalRuleText = "*";
+            }
+            else
+            {
+                throw new InvalidOperationException(ErrorMessages.UnknownEnumValue(HorizontalRuleStyle));
+            }
         }
 
         public static MarkdownFormat Default { get; } = new MarkdownFormat();
@@ -144,7 +171,9 @@ namespace Pihrtsoft.Markdown
 
         public HorizontalRuleFormat HorizontalRuleFormat { get; }
 
-        internal string HorizontalRuleValue => HorizontalRuleFormat.Text;
+        internal string HorizontalRuleText { get; }
+
+        internal HorizontalRuleStyle HorizontalRuleStyle => HorizontalRuleFormat.Style;
 
         internal int HorizontalRuleCount => HorizontalRuleFormat.Count;
 

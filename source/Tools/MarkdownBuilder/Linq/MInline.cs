@@ -34,29 +34,5 @@ namespace Pihrtsoft.Markdown.Linq
         {
             return new MInline(this);
         }
-
-        internal override void ValidateElement(MElement element)
-        {
-            switch (element.Kind)
-            {
-                case MarkdownKind.Text:
-                case MarkdownKind.Raw:
-                case MarkdownKind.Link:
-                case MarkdownKind.LinkReference:
-                case MarkdownKind.Image:
-                case MarkdownKind.ImageReference:
-                case MarkdownKind.Autolink:
-                case MarkdownKind.InlineCode:
-                case MarkdownKind.CharEntity:
-                case MarkdownKind.EntityRef:
-                case MarkdownKind.Comment:
-                case MarkdownKind.Bold:
-                case MarkdownKind.Italic:
-                case MarkdownKind.Strikethrough:
-                    return;
-            }
-
-            Error.InvalidContent(this, element);
-        }
     }
 }

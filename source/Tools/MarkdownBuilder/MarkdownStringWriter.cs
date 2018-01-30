@@ -8,7 +8,7 @@ using Pihrtsoft.Markdown.Linq;
 
 namespace Pihrtsoft.Markdown
 {
-    public class MarkdownStringWriter : MarkdownWriter
+    internal class MarkdownStringWriter : MarkdownBaseWriter, ITableAnalyzer
     {
         private readonly StringBuilder _sb;
         private readonly IFormatProvider _formatProvider;
@@ -37,7 +37,7 @@ namespace Pihrtsoft.Markdown
             _isOpen = true;
         }
 
-        internal virtual StringBuilder GetStringBuilder()
+        protected internal virtual StringBuilder GetStringBuilder()
         {
             return _sb;
         }
@@ -53,15 +53,17 @@ namespace Pihrtsoft.Markdown
             set { _sb.Length = value; }
         }
 
-        public override MarkdownWriter WriteString(string text)
+        public override void WriteString(string text)
         {
-            ThrowIfClosed();
-
-            if (string.IsNullOrEmpty(text))
-                return this;
-
             try
             {
+                BeforeWriteString();
+
+                ThrowIfClosed();
+
+                if (string.IsNullOrEmpty(text))
+                    return;
+
                 int length = text.Length;
 
                 int prev = 0;
@@ -77,12 +79,12 @@ namespace Pihrtsoft.Markdown
 
                         if (NewLineHandling == NewLineHandling.Replace)
                         {
-                            WriteString(text, prev, i - prev);
+                            WriteRaw(text, prev, i - prev);
                             WriteNewLine();
                         }
                         else if (NewLineHandling == NewLineHandling.None)
                         {
-                            WriteString(text, prev, i + 1 - prev);
+                            WriteRaw(text, prev, i + 1 - prev);
                         }
 
                         OnAfterWriteLine();
@@ -97,24 +99,24 @@ namespace Pihrtsoft.Markdown
                         {
                             if (NewLineHandling == NewLineHandling.Replace)
                             {
-                                WriteString(text, prev, i - prev);
+                                WriteRaw(text, prev, i - prev);
                                 WriteNewLine();
                             }
                             else if (NewLineHandling == NewLineHandling.None)
                             {
-                                WriteString(text, prev, i + 2 - prev);
+                                WriteRaw(text, prev, i + 2 - prev);
                             }
 
                             i++;
                         }
                         else if (NewLineHandling == NewLineHandling.Replace)
                         {
-                            WriteString(text, prev, i - prev);
+                            WriteRaw(text, prev, i - prev);
                             WriteNewLine();
                         }
                         else if (NewLineHandling == NewLineHandling.None)
                         {
-                            WriteString(text, prev, i + 1 - prev);
+                            WriteRaw(text, prev, i + 1 - prev);
                         }
 
                         OnAfterWriteLine();
@@ -122,7 +124,7 @@ namespace Pihrtsoft.Markdown
                     }
                     else if (ShouldBeEscaped(ch))
                     {
-                        WriteString(text, prev, i - prev);
+                        WriteRaw(text, prev, i - prev);
                         WriteChar(EscapingChar);
                         WriteChar(ch);
                         prev = ++i;
@@ -133,8 +135,40 @@ namespace Pihrtsoft.Markdown
                     }
                 }
 
-                WriteString(text, prev, text.Length - prev);
-                return this;
+                WriteRaw(text, prev, text.Length - prev);
+            }
+            catch
+            {
+                _state = State.Error;
+                throw;
+            }
+
+            void WriteRaw(string value, int startIndex, int count)
+            {
+                ThrowIfClosed();
+                _sb.Append(value, startIndex, count);
+            }
+
+            void WriteChar(char ch)
+            {
+                ThrowIfClosed();
+                _sb.Append(ch);
+            }
+
+            void WriteNewLine()
+            {
+                ThrowIfClosed();
+                _sb.Append(NewLineChars);
+            }
+        }
+
+        public override void WriteRaw(string data)
+        {
+            try
+            {
+                BeforeWriteRaw();
+                ThrowIfClosed();
+                _sb.Append(data);
             }
             catch
             {
@@ -143,55 +177,24 @@ namespace Pihrtsoft.Markdown
             }
         }
 
-        private void WriteString(string value, int startIndex, int count)
+        protected override void WriteIndentation(string value)
         {
-            ThrowIfClosed();
-            _sb.Append(value, startIndex, count);
+            try
+            {
+                ThrowIfClosed();
+                _sb.Append(value);
+            }
+            catch
+            {
+                _state = State.Error;
+                throw;
+            }
         }
 
-        private void WriteChar(char ch)
-        {
-            ThrowIfClosed();
-            _sb.Append(ch);
-        }
-
-        private void WriteNewLine()
+        protected override void WriteNewLineChars()
         {
             ThrowIfClosed();
             _sb.Append(NewLineChars);
-        }
-
-        public override MarkdownWriter WriteRaw(string data)
-        {
-            ThrowIfClosed();
-
-            try
-            {
-                _sb.Append(data);
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
-        }
-
-        public override MarkdownWriter WriteLine()
-        {
-            try
-            {
-                OnBeforeWriteLine();
-                ThrowIfClosed();
-                _sb.Append(NewLineChars);
-                OnAfterWriteLine();
-                return this;
-            }
-            catch
-            {
-                _state = State.Error;
-                throw;
-            }
         }
 
         public override void WriteValue(int value)
@@ -224,24 +227,25 @@ namespace Pihrtsoft.Markdown
             return _sb.ToString();
         }
 
-        protected internal override IReadOnlyList<TableColumnInfo> AnalyzeTable(IEnumerable<MElement> rows)
-        {
-            return TableAnalyzer.Analyze(rows, Settings, FormatProvider)?.AsReadOnly();
-        }
-
         public override void Flush()
         {
         }
 
         public override void Close()
         {
-            _isOpen = false;
+            if (Settings.CloseOutput)
+                _isOpen = false;
         }
 
         private void ThrowIfClosed()
         {
             if (!_isOpen)
                 throw new ObjectDisposedException(null, "Cannot write to a closed writer.");
+        }
+
+        public IReadOnlyList<TableColumnInfo> AnalyzeTable(IEnumerable<MElement> rows)
+        {
+            return TableAnalyzer.Analyze(rows, Settings, FormatProvider)?.AsReadOnly();
         }
     }
 }

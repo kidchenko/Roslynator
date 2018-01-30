@@ -2,10 +2,10 @@
 
 namespace Pihrtsoft.Markdown
 {
-    public enum Alignment
+    public enum HorizontalRuleStyle
     {
-        Left = 0,
-        Center = 1,
-        Right = 2
+        Hyphen = 0,
+        Underscore = 1,
+        Asterisk = 2
     }
 }

@@ -196,7 +196,7 @@ namespace Roslynator.CodeGeneration.Markdown
             MDocument document = Document(
                 Heading2("Roslynator Analyzers"),
                 Table(
-                    TableRow("Id", "Title", "Category", TableColumn(Alignment.Center, "Enabled by Default")),
+                    TableRow("Id", "Title", "Category", TableColumn(HorizontalAlignment.Center, "Enabled by Default")),
                     analyzers.OrderBy(f => f.Id, comparer).Select(f =>
                     {
                         return TableRow(
@@ -214,7 +214,7 @@ namespace Roslynator.CodeGeneration.Markdown
             MDocument document = Document(
                 Heading2("Roslynator Refactorings"),
                 Table(
-                    TableRow("Id", "Title", TableColumn(Alignment.Center, "Enabled by Default")),
+                    TableRow("Id", "Title", TableColumn(HorizontalAlignment.Center, "Enabled by Default")),
                     refactorings.OrderBy(f => f.Title, comparer).Select(f =>
                     {
                         return TableRow(
@@ -253,7 +253,7 @@ namespace Roslynator.CodeGeneration.Markdown
             MDocument document = Document(
                 Heading2("Roslynator Analyzers by Category"),
                 Table(
-                    TableRow("Category", "Title", "Id", TableColumn(Alignment.Center, "Enabled by Default")),
+                    TableRow("Category", "Title", "Id", TableColumn(HorizontalAlignment.Center, "Enabled by Default")),
                     GetRows()));
 
             return document.ToString();

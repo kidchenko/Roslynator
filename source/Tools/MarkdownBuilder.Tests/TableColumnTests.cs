@@ -39,7 +39,7 @@ namespace Pihrtsoft.Markdown.Tests
         [Fact]
         public void TableColumn_Constructor_AssignAlignment()
         {
-            Alignment alignment = TableColumnAlignment();
+            HorizontalAlignment alignment = TableColumnAlignment();
             var column = new MTableColumn(alignment: alignment, content: StringValue());
 
             Assert.Equal(alignment, column.Alignment);

@@ -2,9 +2,8 @@
 
 using System;
 using System.Collections.Generic;
-using Pihrtsoft.Markdown.Linq;
 
-namespace Pihrtsoft.Markdown
+namespace Pihrtsoft.Markdown.Linq
 {
     internal static class TableAnalyzer
     {

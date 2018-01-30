@@ -16,7 +16,7 @@ namespace Pihrtsoft.Markdown.Tests
 
         public const string CharsEscaped = @"\! "" \# $ % & ' \) \( \* \+ , \- \. / : ; \< = > ? @ \] \[ \\ ^ \_ \` \} \{ \| \~";
 
-        public const string CharsSquareBracketsBacktickEscaped = @"! "" # $ % & ' ) ( * + , - . / : ; < = > ? @ \] \[ \ ^ _ \` } { | ~";
+        public const string CharsSquareBracketsBacktickLessThanEscaped = @"! "" # $ % & ' ) ( * + , - . / : ; \< = > ? @ \] \[ \ ^ _ \` } { | ~";
 
         public const string CharsWithoutSpacesParenthesesEscaped = @"!""#$%&'\)\(*+,-./:;<=>?@][\^_`}{|~";
 
@@ -76,17 +76,17 @@ namespace Pihrtsoft.Markdown.Tests
 
         public static HorizontalRuleFormat HorizontalRuleFormat()
         {
-            return new HorizontalRuleFormat(HorizontalRuleText(), HorizontalRuleCount(), HorizontalRuleSpace());
+            return new HorizontalRuleFormat(HorizontalRuleStyle(), HorizontalRuleCount(), HorizontalRuleSpace());
         }
 
         public static MHorizontalRule CreateHorizontalRule()
         {
-            return new MHorizontalRule(HorizontalRuleText(), HorizontalRuleCount(), HorizontalRuleSpace());
+            return new MHorizontalRule(HorizontalRuleStyle(), HorizontalRuleCount(), HorizontalRuleSpace());
         }
 
-        public static string HorizontalRuleText()
+        public static HorizontalRuleStyle HorizontalRuleStyle()
         {
-            return StringValue();
+            return (HorizontalRuleStyle)IntValue(0, 2);
         }
 
         public static int HorizontalRuleCount()
@@ -166,10 +166,10 @@ namespace Pihrtsoft.Markdown.Tests
 
         public static MBlockQuote CreateBlockQuote()
         {
-            return new MBlockQuote(QuoteBlockText());
+            return new MBlockQuote(BlockQuoteText());
         }
 
-        public static string QuoteBlockText()
+        public static string BlockQuoteText()
         {
             return StringValue();
         }
@@ -184,9 +184,9 @@ namespace Pihrtsoft.Markdown.Tests
             return StringValue();
         }
 
-        public static Alignment TableColumnAlignment()
+        public static HorizontalAlignment TableColumnAlignment()
         {
-            return (Alignment)IntValue(0, 2);
+            return (HorizontalAlignment)IntValue(0, 2);
         }
 
         public static MTaskItem CreateTaskListItem()
@@ -262,12 +262,21 @@ namespace Pihrtsoft.Markdown.Tests
 
         public static MCharEntity CreateHtmlEntity()
         {
-            return new MCharEntity((char)IntValue(1, 0xFFFF));
+            return new MCharEntity(CharEntityChar());
         }
 
         public static char CharEntityChar()
         {
-            return (char)IntValue(1, 0xFFFF);
+            int value = 0;
+
+            do
+            {
+                value = IntValue(0, 0xFFFF);
+
+            } while (value >= 0xD800
+                && value <= 0xDFFF);
+
+            return (char)value;
         }
 
         public static CharEntityFormat HtmlEntityFormat()
@@ -282,7 +291,7 @@ namespace Pihrtsoft.Markdown.Tests
 
         public static MarkdownWriter CreateBuilderWithHtmlEntityFormat(CharEntityFormat? format)
         {
-            return CreateWriter((format != null) ? new MarkdownFormat() : null);
+            return CreateWriter((format != null) ? new MarkdownFormat(charEntityFormat: format.Value) : null);
         }
 
         public static MarkdownWriter CreateBuilderWithCodeBlockOptions(CodeBlockOptions options)
@@ -317,7 +326,7 @@ namespace Pihrtsoft.Markdown.Tests
 
         public static MarkdownWriter CreateBuilder(StringBuilder sb, MarkdownFormat format = null)
         {
-            return MarkdownWriter.Create(sb, MarkdownWriterSettings.From(format));
+            return MarkdownWriter.Create(sb, settings: MarkdownWriterSettings.From(format));
         }
 
         public static int IntValue()
